@@ -8,10 +8,13 @@ defmodule TorCell.Versions do
   in this cell.
   """
   def decode(payload) do
-    for <<x::8, y::8 <- payload>> do
-      <<z::16>> = <<x, y>>
-      z
-    end
+    %TorCell.Versions{
+      versions:
+        for <<x::8, y::8 <- payload>> do
+          <<z::16>> = <<x, y>>
+          z
+        end
+    }
   end
 
   @doc """
