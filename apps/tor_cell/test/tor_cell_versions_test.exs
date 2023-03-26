@@ -10,11 +10,11 @@ defmodule TorCellVersionsTest do
   end
 
   test "encodes a TorCell.Versions" do
-    data =
+    payload =
       TorCell.Versions.encode(%TorCell.Versions{
         versions: [1, 2, 2 ** 16 - 1]
       })
 
-    assert data == <<1::16, 2::16, 2 ** 16 - 1::16>>
+    assert payload == <<1::16, 2::16, 2 ** 16 - 1::16>>
   end
 end
