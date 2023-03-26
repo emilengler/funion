@@ -9,6 +9,12 @@ defmodule TorCellVersionsTest do
     assert cell.versions == [1, 2, 2 ** 16 - 1]
   end
 
+  test "decodes an empty TorCell.Versions" do
+    cell = TorCell.Versions.decode(<<>>)
+
+    assert cell.versions == []
+  end
+
   test "encodes a TorCell.Versions" do
     payload =
       TorCell.Versions.encode(%TorCell.Versions{
