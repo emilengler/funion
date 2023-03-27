@@ -31,7 +31,7 @@ defmodule TorCell.Certs do
   """
   def encode(certs) do
     # TODO: Check for overflow
-    <<length(certs.certs)::16>> <>
+    <<length(certs.certs)::8>> <>
       Enum.join(Enum.map(certs.certs, fn x -> TorCell.Certs.Cert.encode(x) end))
   end
 end
