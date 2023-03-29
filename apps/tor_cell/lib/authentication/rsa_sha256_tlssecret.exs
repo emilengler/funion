@@ -32,4 +32,17 @@ defmodule TorCell.Authentication.RsaSha256Tlssecret do
       sig: payload
     }
   end
+
+  def encode(auth) do
+    "AUTH0001" <>
+      <<auth.cid::binary-size(32)>> <>
+      <<auth.sid::binary-size(32)>> <>
+      <<auth.slog::binary-size(32)>> <>
+      <<auth.clog::binary-size(32)>> <>
+      <<auth.scert::binary-size(32)>> <>
+      <<auth.tlssecrets::binary-size(32)>> <>
+      <<auth.rand::binary-size(24)>>
+
+    auth.sig
+  end
 end
