@@ -8,6 +8,13 @@ defmodule TorCell.Authenticate.RsaSha256Tlssecret do
             rand: nil,
             sig: nil
 
+  @doc """
+  Decodes the payload of the Authentication field inside an AUTHENTICATE
+  TorCell into its internal representation.
+
+  Returns a TorCell.Authenticate.RsaSha256Tlssecret with the fields being
+  set accordingly.
+  """
   def decode(payload) do
     # Skip the AUTH0001
     # TODO: Validate the AUTH0001
@@ -33,6 +40,12 @@ defmodule TorCell.Authenticate.RsaSha256Tlssecret do
     }
   end
 
+  @doc """
+  Encodes a TorCell.Authenticate.RsaSha256Tlssecret into a binary.
+
+  Returns a binary corresponding to the binary representation of an
+  authentication, as found within the AUTHENTICATE TorCell.
+  """
   def encode(auth) do
     "AUTH0001" <>
       <<auth.cid::binary-size(32)>> <>
