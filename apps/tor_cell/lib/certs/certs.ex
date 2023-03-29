@@ -29,9 +29,9 @@ defmodule TorCell.Certs do
 
   Returns a binary corresponding to the payload of a CERTS TorCell.
   """
-  def encode(certs) do
+  def encode(cell) do
     # TODO: Check for overflow
-    <<length(certs.certs)::8>> <>
-      Enum.join(Enum.map(certs.certs, fn x -> TorCell.Certs.Cert.encode(x) end))
+    <<length(cell.certs)::8>> <>
+      Enum.join(Enum.map(cell.certs, fn x -> TorCell.Certs.Cert.encode(x) end))
   end
 end
