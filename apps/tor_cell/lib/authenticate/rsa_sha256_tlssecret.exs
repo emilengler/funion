@@ -28,7 +28,7 @@ defmodule TorCell.Authenticate.RsaSha256Tlssecret do
     <<rand::binary-size(24), payload::binary>> = payload
     # The remaining payload is considered to be the sig
 
-    %TorCell.Authentication.RsaSha256Tlssecret{
+    %TorCell.Authenticate.RsaSha256Tlssecret{
       cid: cid,
       sid: sid,
       slog: slog,
