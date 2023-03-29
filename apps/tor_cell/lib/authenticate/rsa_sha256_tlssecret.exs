@@ -1,4 +1,4 @@
-defmodule TorCell.Authentication.RsaSha256Tlssecret do
+defmodule TorCell.Authenticate.RsaSha256Tlssecret do
   defstruct cid: nil,
             sid: nil,
             slog: nil,
