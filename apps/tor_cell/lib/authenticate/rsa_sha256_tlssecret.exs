@@ -54,8 +54,7 @@ defmodule TorCell.Authenticate.RsaSha256Tlssecret do
       <<auth.clog::binary-size(32)>> <>
       <<auth.scert::binary-size(32)>> <>
       <<auth.tlssecrets::binary-size(32)>> <>
-      <<auth.rand::binary-size(24)>>
-
-    auth.sig
+      <<auth.rand::binary-size(24)>> <>
+      <<auth.sig>>
   end
 end
