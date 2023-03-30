@@ -60,6 +60,6 @@ defmodule TorCell.Authenticate do
   def encode(cell) do
     auth_type = encode_auth_type(cell.auth_type)
     authentication = encode_authentication(cell.authentication, cell.auth_type)
-    <<auth_type::16>> <> <<length(authentication)::16>> <> <<authentication>>
+    auth_type <> <<byte_size(authentication)::16>> <> authentication
   end
 end
