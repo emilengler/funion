@@ -6,8 +6,8 @@ defmodule TorCellAuthenticate do
     auth =
       "AUTH0001" <>
         <<0::8*32>> <>
-        <<0::8*32>> <>
-        <<0::8*32>> <> <<0::8*32>> <> <<0::8*32>> <> <<0::8*32>> <> <<0::8*24>> <> <<42, 69>>
+        <<1::8*32>> <>
+        <<2::8*32>> <> <<3::8*32>> <> <<4::8*32>> <> <<5::8*32>> <> <<6::8*24>> <> <<42, 69>>
 
     payload = <<1::16>> <> <<byte_size(auth)::16>> <> auth
     cell = TorCell.Authenticate.decode(payload)
@@ -16,12 +16,12 @@ defmodule TorCellAuthenticate do
 
     assert cell.authentication == %TorCell.Authenticate.RsaSha256Tlssecret{
              cid: <<0::8*32>>,
-             sid: <<0::8*32>>,
-             slog: <<0::8*32>>,
-             clog: <<0::8*32>>,
-             scert: <<0::8*32>>,
-             tlssecrets: <<0::8*32>>,
-             rand: <<0::8*24>>,
+             sid: <<1::8*32>>,
+             slog: <<2::8*32>>,
+             clog: <<3::8*32>>,
+             scert: <<4::8*32>>,
+             tlssecrets: <<5::8*32>>,
+             rand: <<6::8*24>>,
              sig: <<42, 69>>
            }
   end
@@ -64,12 +64,12 @@ defmodule TorCellAuthenticate do
       auth_type: :rsa_sha256_tlssecret,
       authentication: %TorCell.Authenticate.RsaSha256Tlssecret{
         cid: <<0::8*32>>,
-        sid: <<0::8*32>>,
-        slog: <<0::8*32>>,
-        clog: <<0::8*32>>,
-        scert: <<0::8*32>>,
-        tlssecrets: <<0::8*32>>,
-        rand: <<0::8*24>>,
+        sid: <<1::8*32>>,
+        slog: <<2::8*32>>,
+        clog: <<3::8*32>>,
+        scert: <<4::8*32>>,
+        tlssecrets: <<5::8*32>>,
+        rand: <<6::8*24>>,
         sig: <<42, 69>>
       }
     }
@@ -77,9 +77,9 @@ defmodule TorCellAuthenticate do
     auth_payload =
       "AUTH0001" <>
         <<0::8*32>> <>
-        <<0::8*32>> <>
-        <<0::8*32>> <>
-        <<0::8*32>> <> <<0::8*32>> <> <<0::8*32>> <> <<0::8*24>> <> <<42, 69>>
+        <<1::8*32>> <>
+        <<2::8*32>> <>
+        <<3::8*32>> <> <<4::8*32>> <> <<5::8*32>> <> <<6::8*24>> <> <<42, 69>>
 
     assert TorCell.Authenticate.encode(auth) ==
              <<1::16>> <> <<byte_size(auth_payload)::16>> <> auth_payload
