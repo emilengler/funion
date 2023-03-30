@@ -63,6 +63,6 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
       <<auth.scert::binary-size(32)>> <>
       <<auth.tlssecrets::binary-size(32)>> <>
       <<auth.rand::binary-size(24)>> <>
-      <<auth.sig>>
+      auth.sig
   end
 end
