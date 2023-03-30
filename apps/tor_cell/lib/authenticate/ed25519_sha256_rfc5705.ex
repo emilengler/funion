@@ -32,7 +32,7 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
     <<rand::binary-size(24), payload::binary>> = payload
     # The remaining payload is considered to be the sig
 
-    %TorCell.Authenticate.Ed25519Sha256Rfc5075{
+    %TorCell.Authenticate.Ed25519Sha256Rfc5705{
       cid: cid,
       sid: sid,
       cid_ed: cid_ed,
