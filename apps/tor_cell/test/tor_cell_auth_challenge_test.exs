@@ -4,18 +4,20 @@ defmodule TorCellAuthChallengeTest do
 
   test "decodes a TorCell.Versions" do
     payload = <<42::32*8>> <> <<2::16>> <> <<1::16, 3::16>>
-    cell = TorCell.AuthChallenge.decode(payload)
 
-    assert cell.challenge == <<42::32*8>>
-    assert cell.methods == [:rsa_sha256_tlssecret, :ed25519_sha256_rfc5705]
+    assert TorCell.AuthChallenge.decode(payload) == %TorCell.AuthChallenge{
+             challenge: <<42::32*8>>,
+             methods: [:rsa_sha256_tlssecret, :ed25519_sha256_rfc5705]
+           }
   end
 
   test "decodes an empty TorCell.Versions" do
     payload = <<42::32*8>> <> <<0::16>>
-    cell = TorCell.AuthChallenge.decode(payload)
 
-    assert cell.challenge == <<42::32*8>>
-    assert cell.methods == []
+    assert TorCell.AuthChallenge.decode(payload) == %TorCell.AuthChallenge{
+             challenge: <<42::32*8>>,
+             methods: []
+           }
   end
 
   test "encodes a TorCell.Versions" do

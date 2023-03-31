@@ -6,23 +6,21 @@ defmodule TorCellNetinfoTest do
     payload =
       <<42::32>> <> <<4, 4, 1, 1, 1, 1>> <> <<2>> <> <<4, 4, 2, 2, 2, 2>> <> <<6, 16, 1::8*16>>
 
-    cell = TorCell.Netinfo.decode(payload)
-
-    assert cell.time == DateTime.from_unix!(42)
-    assert cell.otheraddr == [1, 1, 1, 1]
-    assert length(cell.myaddrs) == 2
-
-    assert hd(cell.myaddrs) == [2, 2, 2, 2]
-    assert hd(tl(cell.myaddrs)) == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    assert TorCell.Netinfo.decode(payload) == %TorCell.Netinfo{
+             time: DateTime.from_unix!(42),
+             otheraddr: [1, 1, 1, 1],
+             myaddrs: [[2, 2, 2, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
+           }
   end
 
   test "decodes a TorCell.Netinfo with zero myaddrs" do
     payload = <<0::32>> <> <<4, 4, 1, 1, 1, 1>> <> <<0>>
-    cell = TorCell.Netinfo.decode(payload)
 
-    assert cell.time == DateTime.from_unix!(0)
-    assert cell.otheraddr == [1, 1, 1, 1]
-    assert cell.myaddrs == []
+    assert TorCell.Netinfo.decode(payload) == %TorCell.Netinfo{
+             time: DateTime.from_unix!(0),
+             otheraddr: [1, 1, 1, 1],
+             myaddrs: []
+           }
   end
 
   test "encodes a TorCell.Netinfo" do

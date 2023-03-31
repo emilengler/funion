@@ -4,15 +4,16 @@ defmodule TorCellVersionsTest do
 
   test "decodes a TorCell.Versions" do
     payload = <<1::16, 2::16, 2 ** 16 - 1::16>>
-    cell = TorCell.Versions.decode(payload)
 
-    assert cell.versions == [1, 2, 2 ** 16 - 1]
+    assert TorCell.Versions.decode(payload) == %TorCell.Versions{
+             versions: [1, 2, 2 ** 16 - 1]
+           }
   end
 
   test "decodes an empty TorCell.Versions" do
-    cell = TorCell.Versions.decode(<<>>)
-
-    assert cell.versions == []
+    assert TorCell.Versions.decode(<<>>) == %TorCell.Versions{
+             versions: []
+           }
   end
 
   test "encodes a TorCell.Versions" do
