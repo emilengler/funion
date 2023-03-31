@@ -1,2 +1,0 @@
-defmodule TorCert do
-end
