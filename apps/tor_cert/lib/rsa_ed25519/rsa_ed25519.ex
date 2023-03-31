@@ -37,7 +37,7 @@ defmodule TorCert.RsaEd25519 do
   def encode(cert) do
     <<cert.ed25519_key::binary-size(32)>> <>
       <<DateTime.to_unix(cert.expiration_date)::32>> <>
-      <<length(cert.signature)::8>> <>
+      <<byte_size(cert.signature)::8>> <>
       cert.signature
   end
 end
