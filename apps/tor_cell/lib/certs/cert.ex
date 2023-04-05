@@ -48,6 +48,14 @@ defmodule TorCell.Certs.Cert do
     <<clen::16, payload::binary>> = payload
     <<cert::binary-size(clen), payload::binary>> = payload
 
+    # TODO: Consider actually decoding the certificate here, that is,
+    # performing a full X.509 or TorCert parsing. What currently keeps
+    # me away from doing so, is the fact, that this would introduce
+    # some dependencies to this library and I would like to keep the
+    # dependencies for such small (and fundamental) libraries minimal.
+    # On the other hand, TorCert would continue to be on the bottom
+    # of the chain ...
+
     {
       %TorCell.Certs.Cert{
         type: decode_type(type),
