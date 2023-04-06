@@ -14,6 +14,33 @@ defmodule TorCell.Certs.Cert do
     end
   end
 
+  defp decode_cert(type, cert) do
+    case type do
+      :rsa_link -> decode_cert_x509(cert)
+      :rsa_id -> decode_cert_x509(cert)
+      :rsa_auth -> decode_cert_x509(cert)
+      :ed25519_id_signing -> decode_cert_tor_ed25519(cert)
+      :ed25519_signing_link -> decode_cert_tor_ed25519(cert)
+      :ed25519_signing_auth -> decode_cert_tor_ed25519(cert)
+      :rsa_ed25519_cross_cert -> decode_cert_tor_rsa_ed25519(cert)
+    end
+  end
+
+  defp decode_cert_tor_ed25519(cert) do
+    {cert, _} = TorCert.Ed25519.fetch(cert)
+    cert
+  end
+
+  defp decode_cert_tor_rsa_ed25519(cert) do
+    {cert, _} = TorCert.RsaEd25519.fetch(cert)
+    cert
+  end
+
+  defp decode_cert_x509(cert) do
+    # TODO
+    cert
+  end
+
   defp encode_type(type) do
     case type do
       :rsa_link -> <<1>>
@@ -26,6 +53,23 @@ defmodule TorCell.Certs.Cert do
     end
   end
 
+  defp encode_cert(type, cert) do
+    case type do
+      :rsa_link -> encode_cert_x509(cert)
+      :rsa_id -> encode_cert_x509(cert)
+      :rsa_auth -> encode_cert_x509(cert)
+      :ed25519_id_signing -> TorCert.Ed25519.encode(cert)
+      :ed25519_signing_link -> TorCert.Ed25519.encode(cert)
+      :ed25519_signing_auth -> TorCert.Ed25519.encode(cert)
+      :rsa_ed25519_cross_cert -> TorCert.RsaEd25519.encode(cert)
+    end
+  end
+
+  defp encode_cert_x509(_) do
+    # TODO
+    <<>>
+  end
+
   @doc """
   Encodes the TorCell.Certs.Cert into a binary.
 
@@ -34,7 +78,7 @@ defmodule TorCell.Certs.Cert do
   """
   def encode(cert) do
     # TODO: Check for an overflow here
-    encode_type(cert.type) <> <<byte_size(cert.cert)::16>> <> cert.cert
+    encode_type(cert.type) <> <<byte_size(cert.cert)::16>> <> encode_cert(cert.type, cert.cert)
   end
 
   @doc """
@@ -48,18 +92,12 @@ defmodule TorCell.Certs.Cert do
     <<clen::16, payload::binary>> = payload
     <<cert::binary-size(clen), payload::binary>> = payload
 
-    # TODO: Consider actually decoding the certificate here, that is,
-    # performing a full X.509 or TorCert parsing. What currently keeps
-    # me away from doing so, is the fact, that this would introduce
-    # some dependencies to this library and I would like to keep the
-    # dependencies for such small (and fundamental) libraries minimal.
-    # On the other hand, TorCert would continue to be on the bottom
-    # of the chain ...
+    type = decode_type(type)
 
     {
       %TorCell.Certs.Cert{
-        type: decode_type(type),
-        cert: cert
+        type: type,
+        cert: decode_cert(type, cert)
       },
       payload
     }
