@@ -37,8 +37,7 @@ defmodule TorCell.Certs.Cert do
   end
 
   defp decode_cert_x509(cert) do
-    # TODO
-    cert
+    :public_key.pkix_decode_cert(cert, :otp)
   end
 
   defp encode_type(type) do
