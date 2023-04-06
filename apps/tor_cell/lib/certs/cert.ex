@@ -76,8 +76,9 @@ defmodule TorCell.Certs.Cert do
   a CERTS TorCell.
   """
   def encode(cert) do
+    encoded = encode_cert(cert.type, cert.cert)
     # TODO: Check for an overflow here
-    encode_type(cert.type) <> <<byte_size(cert.cert)::16>> <> encode_cert(cert.type, cert.cert)
+    encode_type(cert.type) <> <<byte_size(encoded)::16>> <> encoded
   end
 
   @doc """
