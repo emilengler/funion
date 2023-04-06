@@ -54,19 +54,14 @@ defmodule TorCell.Certs.Cert do
 
   defp encode_cert(type, cert) do
     case type do
-      :rsa_link -> encode_cert_x509(cert)
-      :rsa_id -> encode_cert_x509(cert)
-      :rsa_auth -> encode_cert_x509(cert)
+      :rsa_link -> :public_key.pkix_encode(:Certificate, cert, :plain)
+      :rsa_id -> :public_key.pkix_encode(:Certificate, cert, :plain)
+      :rsa_auth -> :public_key.pkix_encode(:Certificate, cert, :plain)
       :ed25519_id_signing -> TorCert.Ed25519.encode(cert)
       :ed25519_signing_link -> TorCert.Ed25519.encode(cert)
       :ed25519_signing_auth -> TorCert.Ed25519.encode(cert)
       :rsa_ed25519_cross_cert -> TorCert.RsaEd25519.encode(cert)
     end
-  end
-
-  defp encode_cert_x509(_) do
-    # TODO
-    <<>>
   end
 
   @doc """
