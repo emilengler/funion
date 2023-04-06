@@ -10,13 +10,13 @@ defmodule TorCell.Netinfo do
         16 -> 0x06
       end
 
-    <<atype::8>> <> <<length(addr)::8>> <> Enum.join(Enum.map(addr, fn x -> <<x>> end))
+    <<atype>> <> <<length(addr)>> <> Enum.join(Enum.map(addr, fn x -> <<x>> end))
   end
 
   defp fetch_addr(payload) do
     # TODO: Enforce the type
-    <<_::8, payload::binary>> = payload
-    <<alen::8, payload::binary>> = payload
+    <<_, payload::binary>> = payload
+    <<alen, payload::binary>> = payload
     <<aval::binary-size(alen), payload::binary>> = payload
     # TODO: Parse to an ACTUAL IP data type
     {:binary.bin_to_list(aval), payload}
@@ -32,7 +32,7 @@ defmodule TorCell.Netinfo do
   end
 
   defp fetch_myaddrs(payload) do
-    <<n::8, payload::binary>> = payload
+    <<n, payload::binary>> = payload
     fetch_myaddrs([], n, payload)
   end
 

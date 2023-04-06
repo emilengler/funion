@@ -16,13 +16,13 @@ defmodule TorCell.Certs.Cert do
 
   defp encode_type(type) do
     case type do
-      :rsa_link -> <<1::8>>
-      :rsa_id -> <<2::8>>
-      :rsa_auth -> <<3::8>>
-      :ed25519_id_signing -> <<4::8>>
-      :ed25519_signing_link -> <<5::8>>
-      :ed25519_signing_auth -> <<6::8>>
-      :rsa_ed25519_cross_cert -> <<7::8>>
+      :rsa_link -> <<1>>
+      :rsa_id -> <<2>>
+      :rsa_auth -> <<3>>
+      :ed25519_id_signing -> <<4>>
+      :ed25519_signing_link -> <<5>>
+      :ed25519_signing_auth -> <<6>>
+      :rsa_ed25519_cross_cert -> <<7>>
     end
   end
 
@@ -44,7 +44,7 @@ defmodule TorCell.Certs.Cert do
   remaining data.
   """
   def fetch(payload) do
-    <<type::8, payload::binary>> = payload
+    <<type, payload::binary>> = payload
     <<clen::16, payload::binary>> = payload
     <<cert::binary-size(clen), payload::binary>> = payload
 

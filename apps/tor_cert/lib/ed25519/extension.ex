@@ -19,8 +19,8 @@ defmodule TorCert.Ed25519.Extension do
 
   defp encode_flags(flags) do
     case flags do
-      nil -> <<0::8>>
-      :affects_validation -> <<1::8>>
+      nil -> <<0>>
+      :affects_validation -> <<1>>
     end
   end
 
@@ -52,6 +52,6 @@ defmodule TorCert.Ed25519.Extension do
   Returns a binary corresponding to the binary representation of the extensions.
   """
   def encode(extension) do
-    <<32::16>> <> <<0x04::8>> <> encode_flags(extension.flags) <> extension.data
+    <<32::16>> <> <<0x04>> <> encode_flags(extension.flags) <> extension.data
   end
 end

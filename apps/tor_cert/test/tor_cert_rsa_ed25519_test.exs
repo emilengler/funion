@@ -4,10 +4,10 @@ defmodule TorCertRsaEd25519Test do
 
   test "fetches a TorCert.RsaEd25519" do
     data =
-      <<0::32*8>> <>
+      <<0::8*32>> <>
         <<0::32>> <>
-        <<32::8>> <>
-        <<0::64*8>>
+        <<32>> <>
+        <<0::8*64>>
 
     {cert, data} = TorCert.RsaEd25519.fetch(data)
 
@@ -27,6 +27,6 @@ defmodule TorCertRsaEd25519Test do
       signature: <<0::32*8>>
     }
 
-    assert TorCert.RsaEd25519.encode(cert) == <<0::32*8>> <> <<0::32>> <> <<32::8>> <> <<0::32*8>>
+    assert TorCert.RsaEd25519.encode(cert) == <<0::8*32>> <> <<0::32>> <> <<32>> <> <<0::8*32>>
   end
 end

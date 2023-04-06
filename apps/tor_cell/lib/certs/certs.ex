@@ -16,7 +16,7 @@ defmodule TorCell.Certs do
   Returns a TorCell.Certs with certs being a list of all certificates.
   """
   def decode(payload) do
-    <<n::8, payload::binary>> = payload
+    <<n, payload::binary>> = payload
     {certs, _} = fetch_certs([], n, payload)
 
     %TorCell.Certs{
@@ -31,7 +31,7 @@ defmodule TorCell.Certs do
   """
   def encode(cell) do
     # TODO: Check for overflow
-    <<length(cell.certs)::8>> <>
+    <<length(cell.certs)>> <>
       Enum.join(Enum.map(cell.certs, fn x -> TorCell.Certs.Cert.encode(x) end))
   end
 end

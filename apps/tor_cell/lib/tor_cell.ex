@@ -57,7 +57,7 @@ defmodule TorCell do
         :auth_challenge -> 130
         :authenticate -> 131
         :authorize -> 132
-      end::8>>
+      end>>
   end
 
   defp encode_payload(payload, vlen) do
@@ -78,7 +78,7 @@ defmodule TorCell do
   end
 
   defp fetch_cmd(data) do
-    <<cmd::8, data::binary>> = data
+    <<cmd, data::binary>> = data
     {decode_cmd(cmd), data}
   end
 

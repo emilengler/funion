@@ -89,12 +89,12 @@ defmodule TorCert.Ed25519 do
   Returns a binary corresponding to the certficiate.
   """
   def encode(cert) do
-    <<1::8>> <>
+    <<1>> <>
       encode_cert_type(cert.cert_type) <>
       <<DateTime.to_unix(cert.expiration_date)::32>> <>
       encode_cert_key_type(cert.cert_key_type) <>
       <<cert.certified_key::binary-size(32)>> <>
-      <<length(cert.extensions)::8>> <>
+      <<length(cert.extensions)>> <>
       encode_extensions(cert.extensions) <>
       <<cert.signature::binary-size(64)>>
   end
