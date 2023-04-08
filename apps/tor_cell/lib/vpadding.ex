@@ -18,6 +18,6 @@ defmodule TorCell.Vpadding do
   Returns a binary corresponding to the payload of a VPADDING TorCell.
   """
   def encode(cell) do
-    <<cell.padding>>
+    cell.padding
   end
 end
