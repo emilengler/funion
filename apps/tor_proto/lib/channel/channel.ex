@@ -10,7 +10,7 @@ defmodule TorProto.Channel do
       %TorCell{
         circ_id: 0,
         cmd: :versions,
-        payload: %TorCell.Versions{versions: [3, 4]}
+        payload: %TorCell.Versions{versions: [4]}
       },
       2
     )
