@@ -10,7 +10,7 @@ defmodule TorCell.Netinfo do
         16 -> 0x06
       end
 
-    <<atype>> <> <<length(addr)>> <> Enum.join(Enum.map(addr, fn x -> <<x>> end))
+    <<atype>> <> <<length(addr)>> <> :binary.list_to_bin(addr)
   end
 
   defp fetch_addr(payload) do
