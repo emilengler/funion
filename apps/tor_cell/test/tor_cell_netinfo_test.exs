@@ -8,8 +8,8 @@ defmodule TorCellNetinfoTest do
 
     assert TorCell.Netinfo.decode(payload) == %TorCell.Netinfo{
              time: DateTime.from_unix!(42),
-             otheraddr: [1, 1, 1, 1],
-             myaddrs: [[2, 2, 2, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
+             otheraddr: {1, 1, 1, 1},
+             myaddrs: [{2, 2, 2, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}]
            }
   end
 
@@ -18,7 +18,7 @@ defmodule TorCellNetinfoTest do
 
     assert TorCell.Netinfo.decode(payload) == %TorCell.Netinfo{
              time: DateTime.from_unix!(0),
-             otheraddr: [1, 1, 1, 1],
+             otheraddr: {1, 1, 1, 1},
              myaddrs: []
            }
   end
@@ -26,8 +26,8 @@ defmodule TorCellNetinfoTest do
   test "encodes a TorCell.Netinfo" do
     cell = %TorCell.Netinfo{
       time: DateTime.from_unix!(42),
-      otheraddr: [1, 1, 1, 1],
-      myaddrs: [[2, 2, 2, 2], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
+      otheraddr: {1, 1, 1, 1},
+      myaddrs: [{2, 2, 2, 2}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}]
     }
 
     assert TorCell.Netinfo.encode(cell) ==

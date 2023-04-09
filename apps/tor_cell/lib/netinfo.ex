@@ -5,12 +5,12 @@ defmodule TorCell.Netinfo do
 
   defp encode_addr(addr) do
     atype =
-      case length(addr) do
+      case tuple_size(addr) do
         4 -> 0x04
         16 -> 0x06
       end
 
-    <<atype>> <> <<length(addr)>> <> :binary.list_to_bin(addr)
+    <<atype>> <> <<tuple_size(addr)>> <> :binary.list_to_bin(Tuple.to_list(addr))
   end
 
   defp fetch_addr(payload) do
@@ -19,7 +19,7 @@ defmodule TorCell.Netinfo do
     <<alen, payload::binary>> = payload
     <<aval::binary-size(alen), payload::binary>> = payload
     # TODO: Parse to an ACTUAL IP data type
-    {:binary.bin_to_list(aval), payload}
+    {List.to_tuple(:binary.bin_to_list(aval)), payload}
   end
 
   defp fetch_myaddrs(addrs, n, payload) when n > 0 do
