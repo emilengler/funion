@@ -16,6 +16,20 @@ defmodule TorProto.Channel do
     )
   end
 
+  defp gen_netinfo_cell(socket) do
+    {:ok, {ip, _}} = :ssl.peername(socket)
+
+    TorCell.encode(%TorCell{
+      circ_id: 0,
+      cmd: :netinfo,
+      payload: %TorCell.Netinfo{
+        time: DateTime.from_unix!(0),
+        otheraddr: ip,
+        myaddrs: []
+      }
+    })
+  end
+
   defp recv_cell(socket, circ_id_len, remaining) do
     try do
       TorCell.fetch(remaining, circ_id_len)
@@ -35,10 +49,19 @@ defmodule TorProto.Channel do
     :ok = :ssl.send(socket, gen_versions_cell())
 
     {versions_cell, remaining} = recv_cell(socket, 2, <<>>)
+    # TODO: Negotiate versions
     {certs_cell, remaining} = recv_cell(socket, 4, remaining)
     {auth_challenge_cell, remaining} = recv_cell(socket, 4, remaining)
     {netinfo_cell, remaining} = recv_cell(socket, 4, remaining)
 
-    nil
+    # TODO: Validate the cells
+    # TODO: Perform an authentication
+
+    :ok = :ssl.send(socket, gen_netinfo_cell(socket))
+
+    %TorProto.Channel{
+      socket: socket,
+      version: 4
+    }
   end
 end
