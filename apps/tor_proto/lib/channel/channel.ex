@@ -54,6 +54,9 @@ defmodule TorProto.Channel do
   Initiates a new channel on an already established TLS socket.
 
   Returns the internal representation of a channel.
+
+  TODO: Consider making this function private, as it effectively only
+  serves testing purposes.
   """
   def initiate(socket) do
     :ok = :ssl.send(socket, gen_versions_cell())
