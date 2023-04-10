@@ -74,4 +74,8 @@ defmodule TorProto.Channel do
       version: 4
     }
   end
+
+  def close(chan) do
+    :ok = :ssl.close(chan.socket)
+  end
 end
