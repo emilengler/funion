@@ -46,7 +46,7 @@ defmodule TorProto.Channel do
   Returns the internal represenation of a channel.
   """
   def initiate(hostname, port) do
-    {:ok, socket} = :ssl.connect(hostname, port)
+    {:ok, socket} = :ssl.connect(hostname, port, active: false)
     TorProto.Channel.initiate(socket)
   end
 
