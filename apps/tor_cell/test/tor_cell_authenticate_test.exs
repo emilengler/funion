@@ -12,9 +12,9 @@ defmodule TorCellAuthenticate do
     payload = <<1::16>> <> <<byte_size(auth)::16>> <> auth
     cell = TorCell.Authenticate.decode(payload)
 
-    assert cell.auth_type == :rsa_sha256_tlssecret
+    assert cell.type == :rsa_sha256_tlssecret
 
-    assert cell.authentication == %TorCell.Authenticate.RsaSha256Tlssecret{
+    assert cell.auth == %TorCell.Authenticate.RsaSha256Tlssecret{
              cid: <<0::8*32>>,
              sid: <<1::8*32>>,
              slog: <<2::8*32>>,
@@ -43,9 +43,9 @@ defmodule TorCellAuthenticate do
     payload = <<3::16>> <> <<byte_size(auth)::16>> <> auth
     cell = TorCell.Authenticate.decode(payload)
 
-    assert cell.auth_type == :ed25519_sha256_rfc5705
+    assert cell.type == :ed25519_sha256_rfc5705
 
-    assert cell.authentication == %TorCell.Authenticate.Ed25519Sha256Rfc5705{
+    assert cell.auth == %TorCell.Authenticate.Ed25519Sha256Rfc5705{
              cid: <<0::8*32>>,
              sid: <<1::8*32>>,
              cid_ed: <<2::8*32>>,
@@ -61,8 +61,8 @@ defmodule TorCellAuthenticate do
 
   test "encodes a TorCell.Authenticate.RsaSha256Tlssecret" do
     auth = %TorCell.Authenticate{
-      auth_type: :rsa_sha256_tlssecret,
-      authentication: %TorCell.Authenticate.RsaSha256Tlssecret{
+      type: :rsa_sha256_tlssecret,
+      auth: %TorCell.Authenticate.RsaSha256Tlssecret{
         cid: <<0::8*32>>,
         sid: <<1::8*32>>,
         slog: <<2::8*32>>,
@@ -87,8 +87,8 @@ defmodule TorCellAuthenticate do
 
   test "encodes a TorCell.Authenticate.Ed25519Sha256Rfc5705" do
     auth = %TorCell.Authenticate{
-      auth_type: :ed25519_sha256_rfc5705,
-      authentication: %TorCell.Authenticate.Ed25519Sha256Rfc5705{
+      type: :ed25519_sha256_rfc5705,
+      auth: %TorCell.Authenticate.Ed25519Sha256Rfc5705{
         cid: <<0::8*32>>,
         sid: <<1::8*32>>,
         cid_ed: <<2::8*32>>,
