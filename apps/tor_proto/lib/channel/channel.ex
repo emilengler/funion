@@ -62,11 +62,17 @@ defmodule TorProto.Channel do
     :ok = :ssl.send(socket, gen_versions_cell())
 
     {versions_cell, remaining} = recv_cell(socket, 2, <<>>)
+    %TorCell{circ_id: 0, cmd: :versions, payload: _} = versions_cell
     Enum.member?(versions_cell.payload.versions, 4)
 
     {certs_cell, remaining} = recv_cell(socket, 4, remaining)
+    %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs_cell
+
     {auth_challenge_cell, remaining} = recv_cell(socket, 4, remaining)
+    %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge_cell
+
     {netinfo_cell, remaining} = recv_cell(socket, 4, remaining)
+    %TorCell{circ_id: 0, cmd: :netinfo, payload: _} = netinfo_cell
 
     # TODO: Validate the cells
     # TODO: Perform an authentication
