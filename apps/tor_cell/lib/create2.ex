@@ -26,6 +26,6 @@ defmodule TorCell.Create2 do
   def encode(cell) do
     :ntor = cell.type
 
-    <<0x02::16>> <> <<byte_size(cell.data)::16>> <> <<cell.data>>
+    <<0x02::16>> <> <<byte_size(cell.data)::16>> <> cell.data
   end
 end
