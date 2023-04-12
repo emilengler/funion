@@ -10,7 +10,7 @@ defmodule TorCell.Create2 do
   def decode(payload) do
     <<0x02::16, payload::binary>> = payload
     <<len::16, payload::binary>> = payload
-    <<data::binary-size(len), _>> = payload
+    <<data::binary-size(len), _::binary>> = payload
 
     %TorCell.Create2{
       type: :ntor,
