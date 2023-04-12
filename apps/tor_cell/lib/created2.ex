@@ -8,7 +8,7 @@ defmodule TorCell.Created2 do
   """
   def decode(payload) do
     <<len::16, payload::binary>> = payload
-    <<data::binary-size(len), _>> = payload
+    <<data::binary-size(len), _::binary>> = payload
 
     %TorCell.Created2{
       data: data
