@@ -62,7 +62,8 @@ defmodule TorProto.Channel do
     :ok = :ssl.send(socket, gen_versions_cell())
 
     {versions_cell, remaining} = recv_cell(socket, 2, <<>>)
-    # TODO: Negotiate versions
+    Enum.member?(versions_cell.payload.versions, 4)
+
     {certs_cell, remaining} = recv_cell(socket, 4, remaining)
     {auth_challenge_cell, remaining} = recv_cell(socket, 4, remaining)
     {netinfo_cell, remaining} = recv_cell(socket, 4, remaining)
