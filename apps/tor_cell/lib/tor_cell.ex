@@ -98,7 +98,7 @@ defmodule TorCell do
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
-        :created2 -> Torcell.Created2.decode(payload)
+        :created2 -> TorCell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
         :certs -> TorCell.Certs.decode(payload)
         :auth_challenge -> TorCell.AuthChallenge.decode(payload)
