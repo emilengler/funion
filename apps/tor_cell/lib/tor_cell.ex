@@ -11,6 +11,8 @@ defmodule TorCell do
       0 -> :padding
       7 -> :versions
       8 -> :netinfo
+      10 -> :create2
+      11 -> :created2
       128 -> :vpadding
       129 -> :certs
       130 -> :auth_challenge
@@ -30,6 +32,8 @@ defmodule TorCell do
       :padding -> <<0>>
       :versions -> <<7>>
       :netinfo -> <<8>>
+      :create2 -> <<10>>
+      :created2 -> <<11>>
       :vpadding -> <<128>>
       :certs -> <<129>>
       :auth_challenge -> <<130>>
@@ -43,6 +47,8 @@ defmodule TorCell do
         :padding -> TorCell.Padding.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :netinfo -> TorCell.Netinfo.encode(payload)
+        :create2 -> TorCell.Create2.encode(payload)
+        :created2 -> TorCell.Created2.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
         :certs -> TorCell.Certs.encode(payload)
         :auth_challenge -> TorCell.AuthChallenge.encode(payload)
@@ -91,6 +97,8 @@ defmodule TorCell do
         :padding -> TorCell.Padding.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
+        :create2 -> TorCell.Create2.decode(payload)
+        :created2 -> Torcell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
         :certs -> TorCell.Certs.decode(payload)
         :auth_challenge -> TorCell.AuthChallenge.decode(payload)
