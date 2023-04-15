@@ -2,24 +2,19 @@ defmodule TorProto.Channel do
   @moduledoc """
   Implements the Channel (connection) of the Tor protocol.
   """
-  defstruct socket: nil,
-            version: nil
 
   defp gen_versions_cell() do
-    TorCell.encode(
-      %TorCell{
-        circ_id: 0,
-        cmd: :versions,
-        payload: %TorCell.Versions{versions: [4]}
-      },
-      2
-    )
+    %TorCell{
+      circ_id: 0,
+      cmd: :versions,
+      payload: %TorCell.Versions{
+        versions: [4]
+      }
+    }
   end
 
-  defp gen_netinfo_cell(socket) do
-    {:ok, {ip, _}} = :ssl.peername(socket)
-
-    TorCell.encode(%TorCell{
+  defp gen_netinfo_cell(ip) do
+    %TorCell{
       circ_id: 0,
       cmd: :netinfo,
       payload: %TorCell.Netinfo{
@@ -27,65 +22,60 @@ defmodule TorProto.Channel do
         otheraddr: ip,
         myaddrs: []
       }
-    })
-  end
-
-  defp recv_cell(socket, circ_id_len, remaining) do
-    try do
-      TorCell.fetch(remaining, circ_id_len)
-    rescue
-      MatchError ->
-        {:ok, new} = :ssl.recv(socket, 0, 5000)
-        recv_cell(socket, circ_id_len, remaining <> :binary.list_to_bin(new))
-    end
-  end
-
-  @doc """
-  Initiates a new channel.
-
-  Returns the internal represenation of a channel.
-  """
-  def initiate(hostname, port) do
-    {:ok, socket} = :ssl.connect(hostname, port, active: false)
-    TorProto.Channel.initiate(socket)
-  end
-
-  @doc """
-  Initiates a new channel on an already established TLS socket.
-
-  Returns the internal representation of a channel.
-
-  TODO: Consider making this function private, as it effectively only
-  serves testing purposes.
-  """
-  def initiate(socket) do
-    :ok = :ssl.send(socket, gen_versions_cell())
-
-    {versions_cell, remaining} = recv_cell(socket, 2, <<>>)
-    %TorCell{circ_id: 0, cmd: :versions, payload: _} = versions_cell
-    Enum.member?(versions_cell.payload.versions, 4)
-
-    {certs_cell, remaining} = recv_cell(socket, 4, remaining)
-    %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs_cell
-
-    {auth_challenge_cell, remaining} = recv_cell(socket, 4, remaining)
-    %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge_cell
-
-    {netinfo_cell, remaining} = recv_cell(socket, 4, remaining)
-    %TorCell{circ_id: 0, cmd: :netinfo, payload: _} = netinfo_cell
-
-    # TODO: Validate the cells
-    # TODO: Perform an authentication
-
-    :ok = :ssl.send(socket, gen_netinfo_cell(socket))
-
-    %TorProto.Channel{
-      socket: socket,
-      version: 4
     }
   end
 
-  def close(chan) do
-    :ok = :ssl.close(chan.socket)
+  defp recv_cell() do
+    cell =
+      receive do
+        {:cell, cell} -> cell
+      end
+
+    %TorCell{circ_id: _, cmd: _, payload: _} = cell
+    cell
+  end
+
+  defp initiator_init(responder) do
+    # TODO: Validate the cells
+    # TODO: Do something with padding cells
+
+    send(responder, {:cell, gen_versions_cell()})
+
+    versions = recv_cell()
+    %TorCell{circ_id: 0, cmd: :versions, payload: %TorCell.Versions{versions: [4]}} = versions
+
+    certs = recv_cell()
+    %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs
+
+    auth_challenge = recv_cell()
+    %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge
+
+    netinfo = recv_cell()
+    %TorCell{circ_id: 0, cmd: :netinfo, payload: _} = netinfo
+
+    send(responder, :ip)
+
+    ip =
+      receive do
+        {:ip, ip} -> ip
+      end
+
+    send(responder, {:cell, gen_netinfo_cell(ip)})
+
+    :ok
+  end
+
+  defp initiator_handler() do
+    :ok
+  end
+
+  @doc """
+  Inititates a new channel in a new process communicating with a TorProto.Socket process.
+
+  Returns the PID of the new channel process.
+  """
+  def inititator(responder) do
+    initiator_init(responder)
+    spawn(initiator_handler())
   end
 end
