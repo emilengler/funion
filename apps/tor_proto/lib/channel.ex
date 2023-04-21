@@ -26,7 +26,7 @@ defmodule TorProto.Channel do
   end
 
   defp recv_cell(responder, circ_id_len \\ 4) do
-    send(responder, {:recv_cell, pid, circ_id_len})
+    send(responder, {:recv_cell, self(), circ_id_len})
 
     receive do
       {:recv_cell, cell} -> cell
@@ -34,7 +34,7 @@ defmodule TorProto.Channel do
   end
 
   defp send_cell(responder, cell, circ_id_len \\ 4) do
-    send(responder, {:send_cell, pid, cell, circ_id_len})
+    send(responder, {:send_cell, self(), cell, circ_id_len})
 
     receive do
       {:send_cell, :ok} -> :ok
