@@ -26,17 +26,15 @@ defmodule TorProto.Channel do
   end
 
   defp recv_cell(responder, circ_id_len \\ 4) do
-    send(responder, {:recv_cell, circ_id_len})
+    send(responder, {:recv_cell, pid, circ_id_len})
 
     receive do
-      {:recv_cell, cell} ->
-        %TorCell{circ_id: _, cmd: _, payload: _} = cell
-        cell
+      {:recv_cell, cell} -> cell
     end
   end
 
   defp send_cell(responder, cell, circ_id_len \\ 4) do
-    send(responder, {:send_cell, cell, circ_id_len})
+    send(responder, {:send_cell, pid, cell, circ_id_len})
 
     receive do
       {:send_cell, :ok} -> :ok
@@ -78,7 +76,7 @@ defmodule TorProto.Channel do
   end
 
   @doc """
-  Inititates a new channel in a new process communicating with a TorProto.Socket process.
+  Inititates a new channel in a new process communicating with a TorProto.TlsSocket process.
 
   Returns the PID of the new channel process.
   """
