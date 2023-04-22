@@ -25,16 +25,16 @@ defmodule TorProto.Channel do
     }
   end
 
-  defp recv_cell(responder, circ_id_len \\ 4) do
-    send(responder, {:recv_cell, self(), circ_id_len})
+  defp recv_cell(responder) do
+    send(responder, {:recv_cell, self()})
 
     receive do
       {:recv_cell, cell} -> cell
     end
   end
 
-  defp send_cell(responder, cell, circ_id_len \\ 4) do
-    send(responder, {:send_cell, self(), cell, circ_id_len})
+  defp send_cell(responder, cell) do
+    send(responder, {:send_cell, self(), cell})
 
     receive do
       {:send_cell, :ok} -> :ok
@@ -45,10 +45,10 @@ defmodule TorProto.Channel do
     # TODO: Validate the cells
     # TODO: Do something with padding cells
 
-    send_cell(responder, {:send_cell, gen_versions_cell(), 2})
+    send_cell(responder, gen_versions_cell())
 
-    versions = recv_cell(responder, 2)
-    %TorCell{circ_id: 0, cmd: :versions, payload: %TorCell.Versions{versions: [4]}} = versions
+    versions = recv_cell(responder)
+    %TorCell{circ_id: 0, cmd: :versions, payload: %TorCell.Versions{versions: _}} = versions
 
     certs = recv_cell(responder)
     %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs
@@ -59,7 +59,7 @@ defmodule TorProto.Channel do
     netinfo = recv_cell(responder)
     %TorCell{circ_id: 0, cmd: :netinfo, payload: _} = netinfo
 
-    send(responder, :ip)
+    send(responder, {:ip, self()})
 
     ip =
       receive do
@@ -82,6 +82,6 @@ defmodule TorProto.Channel do
   """
   def inititator(responder) do
     initiator_init(responder)
-    spawn(initiator_handler())
+    spawn(fn -> initiator_handler() end)
   end
 end
