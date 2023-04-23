@@ -14,24 +14,24 @@ defmodule TorProto.Channel.TlsSocket do
     end
   end
 
-  defp connect_handler(socket, parent, state) do
+  defp client_handler(socket, parent, state) do
     receive do
       {:get_ip} ->
         {:ok, {ip, _}} = :ssl.peername(socket)
         send(parent, {:get_ip, ip})
-        connect_handler(socket, parent, state)
+        client_handler(socket, parent, state)
 
       {:send_cell, cell} ->
         :ok = :ssl.send(socket, TorCell.encode(cell, state[:send_circ_id_len]))
         state = Map.replace!(state, :send_circ_id_len, 4)
         send(parent, {:send_cell, :ok})
-        connect_handler(socket, parent, state)
+        client_handler(socket, parent, state)
 
       {:ssl, ^socket, data} ->
         state = Map.replace!(state, :remaining, state[:remaining] <> :binary.list_to_bin(data))
         {cells, state} = recv_cells([], state)
         Enum.map(cells, fn x -> send(parent, {:recv_cell, x}) end)
-        connect_handler(socket, parent, state)
+        client_handler(socket, parent, state)
     end
   end
 
@@ -47,12 +47,12 @@ defmodule TorProto.Channel.TlsSocket do
 
   Returns the PID of the TlsSocket process.
   """
-  def connect(hostname, port, parent) do
+  def client(hostname, port, parent) do
     # TODO: Consider using a struct instead of a raw map
     spawn(fn ->
       {:ok, socket} = :ssl.connect(hostname, port, active: true)
 
-      connect_handler(socket, parent, %{
+      client_handler(socket, parent, %{
         :recv_circ_id_len => 2,
         :send_circ_id_len => 2,
         :remaining => <<>>
