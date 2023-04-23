@@ -3,13 +3,11 @@ defmodule TorProto.Channel do
   Implements the Channel (connection) of the Tor protocol.
   """
 
-  defp gen_versions_cell() do
+  def gen_versions_cell() do
     %TorCell{
       circ_id: 0,
       cmd: :versions,
-      payload: %TorCell.Versions{
-        versions: [4]
-      }
+      payload: %TorCell.Versions{versions: [4]}
     }
   end
 
@@ -25,48 +23,47 @@ defmodule TorProto.Channel do
     }
   end
 
-  defp recv_cell(responder) do
-    send(responder, {:recv_cell, self()})
+  defp get_ip(socket) do
+    send(socket, {:get_ip})
 
+    receive do
+      {:get_ip, ip} -> ip
+    end
+  end
+
+  defp recv_cell() do
     receive do
       {:recv_cell, cell} -> cell
     end
   end
 
-  defp send_cell(responder, cell) do
-    send(responder, {:send_cell, self(), cell})
+  defp send_cell(socket, cell) do
+    send(socket, {:send_cell, cell})
 
     receive do
       {:send_cell, :ok} -> :ok
     end
   end
 
-  defp initiator_init(responder) do
+  defp initiator_init(socket) do
     # TODO: Validate the cells
-    # TODO: Do something with padding cells
 
-    send_cell(responder, gen_versions_cell())
+    :ok = send_cell(socket, gen_versions_cell())
 
-    versions = recv_cell(responder)
+    versions = recv_cell()
     %TorCell{circ_id: 0, cmd: :versions, payload: %TorCell.Versions{versions: _}} = versions
 
-    certs = recv_cell(responder)
+    certs = recv_cell()
     %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs
 
-    auth_challenge = recv_cell(responder)
+    auth_challenge = recv_cell()
     %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge
 
-    netinfo = recv_cell(responder)
+    netinfo = recv_cell()
     %TorCell{circ_id: 0, cmd: :netinfo, payload: _} = netinfo
 
-    send(responder, {:ip, self()})
-
-    ip =
-      receive do
-        {:ip, ip} -> ip
-      end
-
-    send_cell(responder, gen_netinfo_cell(ip))
+    # Send a NETINFO TorCell
+    :ok = send_cell(socket, gen_netinfo_cell(get_ip(socket)))
 
     :ok
   end
@@ -76,12 +73,15 @@ defmodule TorProto.Channel do
   end
 
   @doc """
-  Inititates a new channel in a new process communicating with a TorProto.TlsSocket process.
+  Initiates a new channel in a new process communicating.
 
   Returns the PID of the new channel process.
   """
-  def inititator(responder) do
-    initiator_init(responder)
-    spawn(fn -> initiator_handler() end)
+  def initiator(hostname, port) do
+    spawn(fn ->
+      socket = TorProto.Channel.TlsSocket.connect(hostname, port, self())
+      initiator_init(socket)
+      initiator_handler()
+    end)
   end
 end
