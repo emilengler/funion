@@ -5,7 +5,7 @@ defmodule TorProto.Channel.Initiator do
   TODO: Use GenServer for this (once there are actual commands)
   """
 
-  def gen_versions_cell() do
+  defp gen_versions_cell() do
     %TorCell{
       circ_id: 0,
       cmd: :versions,
