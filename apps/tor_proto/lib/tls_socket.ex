@@ -39,7 +39,7 @@ defmodule TorProto.TlsSocket do
   Creates a new process handling a TLS client operating directly on TorCells.
 
   On incoming TorCells, this process sends the following message:
-  {:recv_cell, cells}
+  {:recv_cell, cell}
 
   The messages it acceps are as follows:
   {:get_ip} -> {:get_ip, ip}
