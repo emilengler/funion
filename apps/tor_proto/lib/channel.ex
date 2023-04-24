@@ -64,7 +64,7 @@ defmodule TorProto.Channel do
 
     # Send a NETINFO TorCell
     :ok = send_cell(socket, gen_netinfo_cell(get_ip(socket)))
-    
+
     :ok
   end
 
