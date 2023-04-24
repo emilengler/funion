@@ -1,4 +1,4 @@
-defmodule TorProto.Channel.TlsSocket do
+defmodule TorProto.TlsSocket do
   @moduledoc """
   A process managing a TLS socket.
   """

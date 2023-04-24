@@ -79,7 +79,7 @@ defmodule TorProto.Channel do
   """
   def initiator(hostname, port) do
     spawn(fn ->
-      socket = TorProto.Channel.TlsSocket.client(hostname, port, self())
+      socket = TorProto.TlsSocket.client(hostname, port, self())
       initiator_init(socket)
       initiator_handler()
     end)
