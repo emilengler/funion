@@ -1,2 +1,0 @@
-defmodule TorProto do
-end
