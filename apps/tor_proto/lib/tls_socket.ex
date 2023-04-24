@@ -1,6 +1,6 @@
 defmodule TorProto.TlsSocket do
   @moduledoc """
-  A process managing a TLS socket.
+  A manager for a TLS socket.
   """
 
   defp recv_cells(cells, state) do
@@ -36,7 +36,7 @@ defmodule TorProto.TlsSocket do
   end
 
   @doc """
-  Creates a new process handling a TLS client operating directly on TorCells.
+  A manager for a TLS client.
 
   On incoming TorCells, this process sends the following message:
   {:recv_cell, cell}
@@ -44,19 +44,16 @@ defmodule TorProto.TlsSocket do
   The messages it acceps are as follows:
   {:get_ip} -> {:get_ip, ip}
   {:send_cell, cell} -> {:send_cell, :ok}
-
-  Returns the PID of the TlsSocket process.
   """
   def client(hostname, port, parent) do
-    # TODO: Consider using a struct instead of a raw map
-    spawn(fn ->
-      {:ok, socket} = :ssl.connect(hostname, port, active: true)
+    {:ok, socket} = :ssl.connect(hostname, port, active: true)
 
-      client_handler(socket, parent, %{
-        :recv_circ_id_len => 2,
-        :send_circ_id_len => 2,
-        :remaining => <<>>
-      })
-    end)
+    client_handler(socket, parent, %{
+      :recv_circ_id_len => 2,
+      :send_circ_id_len => 2,
+      :remaining => <<>>
+    })
+
+    :ok
   end
 end

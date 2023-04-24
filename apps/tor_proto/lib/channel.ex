@@ -1,6 +1,6 @@
 defmodule TorProto.Channel do
   @moduledoc """
-  Implements the Channel (connection) of the Tor protocol.
+  A manager for the Channel of the Tor protocol.
   """
 
   def gen_versions_cell() do
@@ -73,15 +73,13 @@ defmodule TorProto.Channel do
   end
 
   @doc """
-  Initiates a new channel in a new process communicating.
-
-  Returns the PID of the new channel process.
+  Initiates new channel manager in the current process.
   """
   def initiator(hostname, port) do
-    spawn(fn ->
-      socket = TorProto.TlsSocket.client(hostname, port, self())
-      initiator_init(socket)
-      initiator_handler()
-    end)
+    # TODO: Make this work again
+    socket = nil
+    initiator_init(socket)
+    initiator_handler()
+    :ok
   end
 end
