@@ -1,6 +1,6 @@
-defmodule TorProto.TlsSocket do
+defmodule TorProto.TlsSocket.Client do
   @moduledoc """
-  Manages a TLS socket.
+  Manages a TLS client.
 
   TODO: I would really love to use something like GenServer for this.
   The problem that exists with this solution however, is the handling of the
@@ -40,7 +40,7 @@ defmodule TorProto.TlsSocket do
   end
 
   @doc """
-  Manages a TLS client.
+  Creates a fresh TLS connection and manages it, operating on TorCell level.
 
   On incoming TorCells, this process sends the following message:
   {:recv_cell, cell}
@@ -49,7 +49,7 @@ defmodule TorProto.TlsSocket do
   {:get_ip} -> {:get_ip, ip}
   {:send_cell, cell} -> {:send_cell, :ok}
   """
-  def client(hostname, port, parent) do
+  def init(hostname, port, parent) do
     {:ok, socket} = :ssl.connect(hostname, port, active: true)
 
     handler(socket, parent, %{

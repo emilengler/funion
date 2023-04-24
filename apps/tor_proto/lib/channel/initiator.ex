@@ -1,6 +1,8 @@
-defmodule TorProto.Channel do
+defmodule TorProto.Channel.Initiator do
   @moduledoc """
-  A manager for the Channel of the Tor protocol.
+  Manages an initiator on a channel in the Tor protocol.
+
+  TODO: Use GenServer for this (once there are actual commands)
   """
 
   def gen_versions_cell() do
@@ -45,7 +47,17 @@ defmodule TorProto.Channel do
     end
   end
 
-  defp initiator_init(socket) do
+  defp handler() do
+    :ok
+  end
+
+  @doc """
+  Creates a fresh TLS connection and initiates a channel on it.
+  """
+  def init(hostname, port) do
+    parent = self()
+    socket = spawn_link(fn -> TorProto.TlsSocket.Client.init(hostname, port, parent) end)
+
     # TODO: Validate the cells
 
     :ok = send_cell(socket, gen_versions_cell())
@@ -65,21 +77,6 @@ defmodule TorProto.Channel do
     # Send a NETINFO TorCell
     :ok = send_cell(socket, gen_netinfo_cell(get_ip(socket)))
 
-    :ok
-  end
-
-  defp initiator_handler() do
-    :ok
-  end
-
-  @doc """
-  Initiates new channel manager in the current process.
-  """
-  def initiator(hostname, port) do
-    parent = self()
-    socket = spawn_link(fn -> TorProto.TlsSocket.client(hostname, port, parent) end)
-    initiator_init(socket)
-    initiator_handler()
-    :ok
+    handler()
   end
 end
