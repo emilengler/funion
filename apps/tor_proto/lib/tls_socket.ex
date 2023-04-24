@@ -1,6 +1,10 @@
 defmodule TorProto.TlsSocket do
   @moduledoc """
-  A manager for a TLS socket.
+  Manages a TLS socket.
+
+  TODO: I would really love to use something like GenServer for this.
+  The problem that exists with this solution however, is the handling of the
+  active socket. Let me know, if there is a way.
   """
 
   defp recv_cells(cells, state) do
@@ -14,29 +18,29 @@ defmodule TorProto.TlsSocket do
     end
   end
 
-  defp client_handler(socket, parent, state) do
+  defp handler(socket, parent, state) do
     receive do
       {:get_ip} ->
         {:ok, {ip, _}} = :ssl.peername(socket)
         send(parent, {:get_ip, ip})
-        client_handler(socket, parent, state)
+        handler(socket, parent, state)
 
       {:send_cell, cell} ->
         :ok = :ssl.send(socket, TorCell.encode(cell, state[:send_circ_id_len]))
         state = Map.replace!(state, :send_circ_id_len, 4)
         send(parent, {:send_cell, :ok})
-        client_handler(socket, parent, state)
+        handler(socket, parent, state)
 
       {:ssl, ^socket, data} ->
         state = Map.replace!(state, :remaining, state[:remaining] <> :binary.list_to_bin(data))
         {cells, state} = recv_cells([], state)
         Enum.map(cells, fn x -> send(parent, {:recv_cell, x}) end)
-        client_handler(socket, parent, state)
+        handler(socket, parent, state)
     end
   end
 
   @doc """
-  A manager for a TLS client.
+  Manages a TLS client.
 
   On incoming TorCells, this process sends the following message:
   {:recv_cell, cell}
@@ -48,7 +52,7 @@ defmodule TorProto.TlsSocket do
   def client(hostname, port, parent) do
     {:ok, socket} = :ssl.connect(hostname, port, active: true)
 
-    client_handler(socket, parent, %{
+    handler(socket, parent, %{
       :recv_circ_id_len => 2,
       :send_circ_id_len => 2,
       :remaining => <<>>
