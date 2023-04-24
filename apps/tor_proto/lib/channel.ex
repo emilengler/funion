@@ -64,7 +64,7 @@ defmodule TorProto.Channel do
 
     # Send a NETINFO TorCell
     :ok = send_cell(socket, gen_netinfo_cell(get_ip(socket)))
-
+    
     :ok
   end
 
@@ -76,8 +76,8 @@ defmodule TorProto.Channel do
   Initiates new channel manager in the current process.
   """
   def initiator(hostname, port) do
-    # TODO: Make this work again
-    socket = nil
+    parent = self()
+    socket = spawn_link(fn -> TorProto.TlsSocket.client(hostname, port, parent) end)
     initiator_init(socket)
     initiator_handler()
     :ok
