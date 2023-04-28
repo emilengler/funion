@@ -3,5 +3,6 @@ defmodule TorDir.Router do
             identity: nil,
             ip4: nil,
             ip6: nil,
-            orport: nil
+            orport: nil,
+            keys: nil
 end
