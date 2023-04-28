@@ -54,9 +54,16 @@ defmodule TorProto.Channel.Initiator do
   @doc """
   Creates a fresh TLS connection and initiates a channel on it.
   """
-  def init(hostname, port) do
+  def init(router) do
+    ip =
+      if router.ip6 != nil do
+        router.ip6
+      else
+        router.ip4
+      end
+
     parent = self()
-    socket = spawn_link(fn -> TorProto.TlsSocket.Client.init(hostname, port, parent) end)
+    socket = spawn_link(fn -> TorProto.TlsSocket.Client.init(ip, router.orport, parent) end)
 
     # TODO: Validate the cells
 
