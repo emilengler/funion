@@ -1,2 +1,0 @@
-defmodule TorDir do
-end
