@@ -25,7 +25,8 @@ defmodule TorProto.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tor_cell, in_umbrella: true}
+      {:tor_cell, in_umbrella: true},
+      {:tor_dir, in_umbrella: true}
     ]
   end
 end
