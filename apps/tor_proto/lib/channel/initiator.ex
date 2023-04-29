@@ -25,6 +25,17 @@ defmodule TorProto.Channel.Initiator do
     }
   end
 
+  defp gen_circ_id(circ_ids) do
+    circ_id = Enum.random(1..(2 ** 32 - 1))
+
+    # Check if the circ_id already exists
+    if Map.fetch(circ_ids, circ_id) != :error do
+      gen_circ_id(circ_ids)
+    else
+      circ_id
+    end
+  end
+
   defp get_ip(socket) do
     send(socket, {:get_ip})
 
@@ -47,8 +58,39 @@ defmodule TorProto.Channel.Initiator do
     end
   end
 
-  defp handler() do
-    :ok
+  defp handler(router, socket, state) do
+    receive do
+      {:create, pid} ->
+        parent = self()
+        circ_id = gen_circ_id(state[:circ_ids])
+
+        circuit =
+          spawn_link(fn ->
+            TorProto.Circuit.Initiator.init(router, circ_id, parent)
+          end)
+
+        state = %{circ_ids: Map.put(state[:circ_ids], circ_id, circuit)}
+        send(pid, {:create, pid})
+        handler(router, socket, state)
+
+      {:recv_cell, cell} ->
+        if cell.circ_id == 0 do
+          raise "TODO"
+        else
+          send(Map.fetch!(state[:circ_ids], cell.circ_id), {:recv_cell, cell})
+          handler(router, socket, state)
+        end
+
+      {:send_cell, cell, pid} ->
+        # Dirty hack :^)
+        if pid != Map.fetch!(state[:circ_ids], cell.circ_id) do
+          raise MatchError
+        end
+
+        send_cell(socket, cell)
+        send(pid, {:send_cell, :ok})
+        handler(router, socket, state)
+    end
   end
 
   @doc """
@@ -84,6 +126,8 @@ defmodule TorProto.Channel.Initiator do
     # Send a NETINFO TorCell
     :ok = send_cell(socket, gen_netinfo_cell(get_ip(socket)))
 
-    handler()
+    handler(router, socket, %{
+      circ_ids: %{}
+    })
   end
 end
