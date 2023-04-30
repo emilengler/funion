@@ -71,7 +71,7 @@ defmodule TorProto.Channel.Initiator do
           end)
 
         state = %{circ_ids: Map.put(state[:circ_ids], circ_id, circuit)}
-        send(pid, {:create, pid})
+        send(pid, {:create, circuit})
         handler(router, socket, state)
 
       {:recv_cell, cell} ->
