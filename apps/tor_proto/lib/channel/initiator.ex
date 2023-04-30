@@ -26,7 +26,8 @@ defmodule TorProto.Channel.Initiator do
   end
 
   defp gen_circ_id(circ_ids) do
-    circ_id = Enum.random(1..(2 ** 32 - 1))
+    # Set the MSB to 1
+    circ_id = Bitwise.bor(2 ** 31, Enum.random(1..(2 ** 32 - 1)))
 
     # Check if the circ_id already exists
     if Map.fetch(circ_ids, circ_id) != :error do
