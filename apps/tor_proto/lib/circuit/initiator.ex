@@ -3,6 +3,24 @@ defmodule TorProto.Circuit.Initiator do
   Manages an initiator of a circuit on a channel in the Tor protocol.
   """
 
+  defp gen_secret_input(b, id, x_pub, x_priv, y) do
+    # TODO: Remove boilerplate
+    # The cryptographic keys as real integers
+    <<b::integer-size(32)-unit(8)>> = b
+    <<id::integer-size(20)-unit(8)>> = id
+    <<x_pub::integer-size(32)-unit(8)>> = x_pub
+    <<x_priv::integer-size(32)-unit(8)>> = x_priv
+    <<y::integer-size(32)-unit(8)>> = y
+
+    :binary.encode_unsigned(y * x_priv) <>
+      :binary.encode_unsigned(b * x_priv) <>
+      :binary.encode_unsigned(id) <>
+      :binary.encode_unsigned(b) <>
+      :binary.encode_unsigned(x_pub) <>
+      :binary.encode_unsigned(y) <>
+      "ntor-curve25519-sha256-1"
+  end
+
   defp recv_cell() do
     receive do
       {:recv_cell, cell} -> cell
@@ -50,6 +68,9 @@ defmodule TorProto.Circuit.Initiator do
 
     # TODO: Check if Y is in G^
     # TODO: Compute secrets
+
+    secret_input =
+      gen_secret_input(router.keys.x25519_ntor, router.identity, x_pub, x_priv, server_kp)
 
     handler()
   end
