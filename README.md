@@ -10,7 +10,7 @@ An implementation of the Tor protocol in Elixir.
 
 ## Contributing
 
-The repository itself is managed by the [Fossil](https://fossil-scm) version control system.
+The repository itself is managed by the [Fossil](https://fossil-scm.org) version control system.
 
 Please report [**issues**](https://dev.emux.org/funion/ticket) there.
 
