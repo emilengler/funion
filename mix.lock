@@ -1,0 +1,3 @@
+%{
+  "hkdf": {:hex, :hkdf, "0.2.0", "be3c4f88b3bbc565b75e039befb057de1eed8d794dd241bed264e53271e704c8", [:mix], [], "hexpm", "ab23e116b734b72a031d20cbf922ba424a0fb8ea824747edb060b0bb18b9eca6"},
+}
