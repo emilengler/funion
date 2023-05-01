@@ -31,4 +31,12 @@ defmodule TorCrypto.Handshake.Ntor.Client do
       y <>
       "ntor-curve25519-sha256-1"
   end
+
+  @doc """
+  Verifies the secret input with the value from the server.
+  """
+  def is_valid?(secret_input, auth, b, id, x, y) do
+    auth_input = TorCrypto.Handshake.Ntor.auth_input(secret_input, b, id, x, y)
+    :crypto.mac(:hmac, :sha256, "ntor-curve25519-sha256-1:mac", auth_input) == auth
+  end
 end

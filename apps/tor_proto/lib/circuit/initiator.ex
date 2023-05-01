@@ -30,6 +30,7 @@ defmodule TorProto.Circuit.Initiator do
   Returns the PID of the new process managing the circuit.
   """
   def init(router, circ_id, parent) do
+    # TODO: Use shorter names for variables
     {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
 
     create2 = %TorCell{
@@ -59,6 +60,16 @@ defmodule TorProto.Circuit.Initiator do
         router.identity,
         x_pk,
         x_sk,
+        server_kp
+      )
+
+    true =
+      TorCrypto.Handshake.Ntor.Client.is_valid?(
+        secret_input,
+        auth,
+        router.keys.x25519_ntor,
+        router.identity,
+        x_pk,
         server_kp
       )
 
