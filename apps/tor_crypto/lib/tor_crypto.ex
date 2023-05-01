@@ -1,2 +1,0 @@
-defmodule TorCrypto do
-end
