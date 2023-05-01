@@ -30,7 +30,8 @@ defmodule TorProto.Circuit.Initiator do
   Returns the PID of the new process managing the circuit.
   """
   def init(router, circ_id, parent) do
-    # TODO: Use shorter names for variables
+    b = router.keys.x25519_ntor
+    id = router.identity
     {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
 
     create2 = %TorCell{
@@ -38,8 +39,7 @@ defmodule TorProto.Circuit.Initiator do
       cmd: :create2,
       payload: %TorCell.Create2{
         type: :ntor,
-        data:
-          TorCrypto.Handshake.Ntor.Client.stage2(router.keys.x25519_ntor, router.identity, x_pk)
+        data: TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk)
       }
     }
 
@@ -48,30 +48,15 @@ defmodule TorProto.Circuit.Initiator do
     created2 = recv_cell()
     %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{data: data}} = created2
 
-    <<server_kp::binary-size(32), data::binary>> = data
+    <<y::binary-size(32), data::binary>> = data
     <<auth::binary-size(32), _::binary>> = data
 
     # TODO: Check if Y is in G^
     # TODO: Compute secrets
 
-    secret_input =
-      TorCrypto.Handshake.Ntor.Client.stage3(
-        router.keys.x25519_ntor,
-        router.identity,
-        x_pk,
-        x_sk,
-        server_kp
-      )
+    secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
 
-    true =
-      TorCrypto.Handshake.Ntor.Client.is_valid?(
-        secret_input,
-        auth,
-        router.keys.x25519_ntor,
-        router.identity,
-        x_pk,
-        server_kp
-      )
+    true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
 
     handler()
   end
