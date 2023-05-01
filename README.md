@@ -8,6 +8,14 @@
 
 An implementation of the Tor protocol in Elixir.
 
+## Contributing
+
+The repository itself is managed by the [Fossil](https://fossil-scm) version control system.
+
+Please report [**issues**](https://dev.emux.org/funion/ticket) there.
+
+**Pull Requests** are accepted through E-Mail and GitHub! 😍
+
 ## Etymology
 
 *Fun* and *Onion* makes up *Funion*.
