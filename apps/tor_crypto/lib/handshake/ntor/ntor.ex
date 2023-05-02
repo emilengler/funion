@@ -40,4 +40,21 @@ defmodule TorCrypto.Handshake.Ntor do
       "ntor-curve25519-sha256-1:key_expand"
     )
   end
+
+  @doc """
+  Derives the keys from the secret_input.
+
+  Returns a TorCrypto.Handshake.Keys, containing the keys.
+  """
+  def derive_keys(secret_input) do
+    k = kdf(secret_input, 80)
+    k = for <<x::binary-size(8) <- k>>, do: x
+
+    %TorCrypto.Handshake.Keys{
+      df: Enum.fetch!(k, 0),
+      db: Enum.fetch!(k, 1),
+      kf: Enum.fetch!(k, 2),
+      kb: Enum.fetch!(k, 3)
+    }
+  end
 end
