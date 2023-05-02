@@ -52,11 +52,16 @@ defmodule TorProto.Circuit.Initiator do
     <<auth::binary-size(32), _::binary>> = data
 
     # TODO: Check if Y is in G^
-    # TODO: Compute secrets
 
     secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
-
     true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
+
+    # TODO: Consider placing this in TorCrypto
+    k = TorCrypto.Handshake.Ntor.kdf(secret_input, 80)
+    <<df::binary-size(20), k::binary>> = k
+    <<db::binary-size(20), k::binary>> = k
+    <<kf::binary-size(20), k::binary>> = k
+    <<kb::binary-size(20), k::binary>> = k
 
     handler()
   end
