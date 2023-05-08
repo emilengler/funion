@@ -1,7 +1,8 @@
 defmodule TorCell.Relay.Unencrypted do
   defstruct cmd: nil,
             stream_id: nil,
-            payload: nil
+            payload: nil,
+            padding: nil
 
   defp is_decrypted?(data, our_digest) do
     <<_, remainder::binary>> = data
@@ -42,14 +43,15 @@ defmodule TorCell.Relay.Unencrypted do
       <<payload::binary-size(length), data::binary>> = data
 
       padding_len = 509 - 11 - length
-      <<_::binary-size(padding_len), _::binary>> = data
+      <<padding::binary-size(padding_len), _::binary>> = data
 
       {
         true,
         %TorCell.Relay.Unencrypted{
           cmd: cmd,
           stream_id: stream_id,
-          payload: payload
+          payload: payload,
+          padding: padding
         }
       }
     else
