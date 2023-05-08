@@ -3,13 +3,21 @@ defmodule TorCell.Relay.Unencrypted do
             stream_id: nil,
             payload: nil
 
-  defp is_decrypted?(data, digest) do
-    <<_, data::binary>> = data
-    <<recognized::16, data::binary>> = data
-    <<_::16, data::binary>> = data
-    <<dig::32, _::binary>> = data
+  defp is_decrypted?(data, our_digest) do
+    <<_, remainder::binary>> = data
+    <<recognized::16, remainder::binary>> = remainder
+    <<_::16, remainder::binary>> = remainder
+    <<their_digest::32, _::binary>> = remainder
 
-    recognized == 0 && <<digest::binary-size(4)>> == dig
+    # Replace the digest field in data with four zeros
+    <<data_prefix::binary-size(5), data_suffix::binary>> = data
+    <<_::binary-size(4), data_suffix::binary>> = data_suffix
+    data = data_prefix <> <<0::32>> <> data_suffix
+
+    our_digest = TorCrypto.Digest.update(our_digest, data)
+    <<our_digest::32>> = TorCrypto.Digest.calculate(our_digest)
+
+    recognized == 0 && their_digest == our_digest
   end
 
   @doc """
