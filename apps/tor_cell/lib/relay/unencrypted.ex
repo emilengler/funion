@@ -29,8 +29,6 @@ defmodule TorCell.Relay.Unencrypted do
   Returns a tuple containing a {true, %TorCell.Relay.Unencrypted} if all onion
   skins could have been removed successfully or a {false, %TorCell.Relay} if
   it could not be fully decrypted.
-
-  TODO: Consider doing the digest calculation here
   """
   def decrypt(cell, keys, digest) do
     data = TorCrypto.OnionSkin.decrypt(cell.onion_skin, keys)
