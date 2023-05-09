@@ -64,9 +64,6 @@ defmodule TorCell.Relay.Unencrypted do
   @doc """
   Decrypts a RELAY TorCell by removing length(keys) onion layers from it.
 
-  Returns a TorCell.Relay.Unencrypted if all onion layers have been removed or
-  a TorCell.Relay with as much onion layers removed as possible.
-
   Returns a tuple containing a {true, %TorCell.Relay.Unencrypted} if all onion
   skins could have been removed successfully or a {false, %TorCell.Relay} if
   it could not be fully decrypted.
