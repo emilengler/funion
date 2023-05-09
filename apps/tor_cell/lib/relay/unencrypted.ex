@@ -4,6 +4,26 @@ defmodule TorCell.Relay.Unencrypted do
             payload: nil,
             padding: nil
 
+  defp decode_cmd(cmd) do
+    case cmd do
+      1 -> :relay_begin
+      2 -> :relay_data
+      3 -> :relay_end
+      4 -> :relay_connected
+      5 -> :relay_sendme
+      6 -> :relay_extend
+      7 -> :relay_extended
+      8 -> :relay_truncate
+      9 -> :relay_truncated
+      10 -> :relay_drop
+      11 -> :relay_resolve
+      12 -> :relay_resolved
+      13 -> :relay_begin_dir
+      14 -> :relay_extend2
+      15 -> :relay_extended2
+    end
+  end
+
   defp is_decrypted?(data, our_digest) do
     <<_, remainder::binary>> = data
     <<recognized::16, remainder::binary>> = remainder
@@ -36,6 +56,7 @@ defmodule TorCell.Relay.Unencrypted do
 
     if is_decrypted?(data, digest) do
       <<cmd, data::binary>> = data
+      cmd = decode_cmd(cmd)
       <<_::16, data::binary>> = data
       <<stream_id::16, data::binary>> = data
       <<_::32, data::binary>> = data
