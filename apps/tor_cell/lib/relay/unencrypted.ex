@@ -24,6 +24,26 @@ defmodule TorCell.Relay.Unencrypted do
     end
   end
 
+  defp decode(data) do
+    <<cmd, data::binary>> = data
+    cmd = decode_cmd(cmd)
+    <<_::16, data::binary>> = data
+    <<stream_id::16, data::binary>> = data
+    <<_::32, data::binary>> = data
+    <<length::16, data::binary>> = data
+    <<payload::binary-size(length), data::binary>> = data
+
+    padding_len = 509 - 11 - length
+    <<padding::binary-size(padding_len), _::binary>> = data
+
+    %TorCell.Relay.Unencrypted{
+      cmd: cmd,
+      stream_id: stream_id,
+      payload: payload,
+      padding: padding
+    }
+  end
+
   defp is_decrypted?(data, our_digest) do
     <<_, remainder::binary>> = data
     <<recognized::16, remainder::binary>> = remainder
@@ -55,25 +75,9 @@ defmodule TorCell.Relay.Unencrypted do
     data = TorCrypto.OnionSkin.decrypt(cell.onion_skin, keys)
 
     if is_decrypted?(data, digest) do
-      <<cmd, data::binary>> = data
-      cmd = decode_cmd(cmd)
-      <<_::16, data::binary>> = data
-      <<stream_id::16, data::binary>> = data
-      <<_::32, data::binary>> = data
-      <<length::16, data::binary>> = data
-      <<payload::binary-size(length), data::binary>> = data
-
-      padding_len = 509 - 11 - length
-      <<padding::binary-size(padding_len), _::binary>> = data
-
       {
         true,
-        %TorCell.Relay.Unencrypted{
-          cmd: cmd,
-          stream_id: stream_id,
-          payload: payload,
-          padding: padding
-        }
+        decode(data)
       }
     else
       {
