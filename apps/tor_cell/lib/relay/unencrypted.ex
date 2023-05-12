@@ -44,6 +44,37 @@ defmodule TorCell.Relay.Unencrypted do
     }
   end
 
+  defp encode_cmd(cmd) do
+    case cmd do
+      :relay_begin -> <<1>>
+      :relay_data -> <<2>>
+      :relay_end -> <<3>>
+      :relay_connected -> <<4>>
+      :relay_sendme -> <<5>>
+      :relay_extend -> <<6>>
+      :relay_extended -> <<7>>
+      :relay_truncate -> <<8>>
+      :relay_truncated -> <<9>>
+      :relay_drop -> <<10>>
+      :relay_resolve -> <<11>>
+      :relay_resolved -> <<12>>
+      :relay_begin_dir -> <<13>>
+      :relay_extend2 -> <<14>>
+      :relay_extended2 -> <<15>>
+    end
+  end
+
+  defp encode(cell) do
+    encoded =
+      encode_cmd(cell.cmd) <>
+        <<1::16>> <>
+        <<cell.stream_id::16>> <> <<0::32>> <> <<length(cell.payload)::16>> <> cell.payload
+
+    # Add the padding
+    padding_length = 509 - 11 - length(cell.payload)
+    encoded <> <<0::integer-size(padding_length)-unit(8)>>
+  end
+
   defp is_decrypted?(data, our_digest) do
     <<_, remainder::binary>> = data
     <<recognized::16, remainder::binary>> = remainder
@@ -82,5 +113,15 @@ defmodule TorCell.Relay.Unencrypted do
         TorCell.Relay.encode(data)
       }
     end
+  end
+
+  @doc """
+  Encodes an unencrypted RELAY TorCell into its internal representation, adding
+  length(keys) onion layers to it.
+
+  Returns a binary corresponding to the encoded and optionally encrypted TorCell.
+  """
+  def encrypt(cell, keys) do
+    TorCrypto.OnionSkin.encrypt(encode(cell), keys)
   end
 end
