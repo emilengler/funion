@@ -48,7 +48,7 @@ defmodule TorCrypto.Handshake.Ntor do
   """
   def derive_keys(secret_input) do
     k = kdf(secret_input, 80)
-    k = for <<x::binary-size(8) <- k>>, do: x
+    k = for <<x::binary-size(20) <- k>>, do: x
 
     %TorCrypto.Handshake.Keys{
       df: Enum.fetch!(k, 0),
