@@ -17,8 +17,23 @@ defmodule TorProto.Circuit.Initiator do
     end
   end
 
+  defp handler_relay(router, circ_id, parent, state, cell) do
+    # Because we are currently only an OP, cells **must** be decrypted
+    {cell, true} = TorCell.Router.Unencrypted.decrypt(cell.payload, state[:keys], state[:digest])
+
+    digest = TorCrypto.Digest.update(state[:digest], TorCell.Router.Unencrypted.encrypt(cell, []))
+    state = Map.put(state, :digest, digest)
+
+    handler(router, circ_id, parent, state)
+  end
+
   defp handler(router, circ_id, parent, state) do
-    :ok
+    receive do
+      {:recv_cell, cell} ->
+        case cell.cmd do
+          :relay -> handler_relay(router, circ_id, parent, state, cell)
+        end
+    end
   end
 
   @doc """
@@ -57,7 +72,11 @@ defmodule TorProto.Circuit.Initiator do
     true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
     keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
 
-    state = %{keys: [keys]}
+    state = %{
+      keys: [keys],
+      digest: TorCrypto.Digest.init()
+    }
+
     handler(router, circ_id, parent, state)
   end
 end
