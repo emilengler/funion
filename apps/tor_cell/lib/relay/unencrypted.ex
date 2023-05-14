@@ -7,20 +7,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp decode_cmd(cmd) do
     case cmd do
       1 -> :relay_begin
-      2 -> :relay_data
-      3 -> :relay_end
       4 -> :relay_connected
-      5 -> :relay_sendme
-      6 -> :relay_extend
-      7 -> :relay_extended
-      8 -> :relay_truncate
-      9 -> :relay_truncated
-      10 -> :relay_drop
-      11 -> :relay_resolve
-      12 -> :relay_resolved
-      13 -> :relay_begin_dir
-      14 -> :relay_extend2
-      15 -> :relay_extended2
     end
   end
 
@@ -47,20 +34,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp encode_cmd(cmd) do
     case cmd do
       :relay_begin -> <<1>>
-      :relay_data -> <<2>>
-      :relay_end -> <<3>>
       :relay_connected -> <<4>>
-      :relay_sendme -> <<5>>
-      :relay_extend -> <<6>>
-      :relay_extended -> <<7>>
-      :relay_truncate -> <<8>>
-      :relay_truncated -> <<9>>
-      :relay_drop -> <<10>>
-      :relay_resolve -> <<11>>
-      :relay_resolved -> <<12>>
-      :relay_begin_dir -> <<13>>
-      :relay_extend2 -> <<14>>
-      :relay_extended2 -> <<15>>
     end
   end
 
