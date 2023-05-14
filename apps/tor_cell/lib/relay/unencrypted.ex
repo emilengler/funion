@@ -20,6 +20,12 @@ defmodule TorCell.Relay.Unencrypted do
     <<length::16, data::binary>> = data
     <<payload::binary-size(length), data::binary>> = data
 
+    payload =
+      case cmd do
+        :relay_begin -> TorCell.Relay.Begin.decode(payload)
+        :relay_connected -> TorCell.Relay.Connected.decode(payload)
+      end
+
     padding_len = 509 - 11 - length
     <<padding::binary-size(padding_len), _::binary>> = data
 
@@ -38,14 +44,23 @@ defmodule TorCell.Relay.Unencrypted do
     end
   end
 
+  defp encode_payload(cmd, payload) do
+    case cmd do
+      :relay_begin -> TorCell.Relay.Begin.encode(payload)
+      :relay_connected -> TorCell.Relay.Connected.encode(payload)
+    end
+  end
+
   defp encode(cell) do
+    cmd = encode_cmd(cell.cmd)
+    payload = encode_payload(cell.cmd, cell.payload)
+
     encoded =
-      encode_cmd(cell.cmd) <>
-        <<1::16>> <>
-        <<cell.stream_id::16>> <> <<0::32>> <> <<length(cell.payload)::16>> <> cell.payload
+      cmd <>
+        <<1::16>> <> <<cell.stream_id::16>> <> <<0::32>> <> <<length(payload)::16>> <> payload
 
     # Add the padding
-    padding_length = 509 - 11 - length(cell.payload)
+    padding_length = 509 - 11 - length(payload)
     encoded <> <<0::integer-size(padding_length)-unit(8)>>
   end
 
