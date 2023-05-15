@@ -23,10 +23,8 @@ defmodule TorCrypto.OnionSkin do
   Returns a binary corresponding to the encrypted onion skins.
   """
   def encrypt(data, keys) when length(keys) > 0 do
-    encrypt(
-      :crypto.crypto_one_time_aead(:aes_128_gcm, hd(keys), <<0>>, data, <<>>, true),
-      Enum.take(keys, tl(keys))
-    )
+    {encrypted, _} = :crypto.crypto_one_time_aead(:aes_128_gcm, hd(keys), <<0>>, data, <<>>, true)
+    encrypt(encrypted, tl(keys))
   end
 
   def encrypt(data, _) do
