@@ -57,10 +57,10 @@ defmodule TorCell.Relay.Unencrypted do
 
     encoded =
       cmd <>
-        <<1::16>> <> <<cell.stream_id::16>> <> <<0::32>> <> <<length(payload)::16>> <> payload
+        <<1::16>> <> <<cell.stream_id::16>> <> <<0::32>> <> <<byte_size(payload)::16>> <> payload
 
     # Add the padding
-    padding_length = 509 - 11 - length(payload)
+    padding_length = 509 - 11 - byte_size(payload)
     encoded <> <<0::integer-size(padding_length)-unit(8)>>
   end
 
