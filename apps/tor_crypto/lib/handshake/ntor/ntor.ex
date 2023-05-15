@@ -47,14 +47,17 @@ defmodule TorCrypto.Handshake.Ntor do
   Returns a TorCrypto.Handshake.Keys, containing the keys.
   """
   def derive_keys(secret_input) do
-    k = kdf(secret_input, 80)
-    k = for <<x::binary-size(20) <- k>>, do: x
+    k = kdf(secret_input, 72)
+    <<df::binary-size(20), k::binary>> = k
+    <<db::binary-size(20), k::binary>> = k
+    <<kf::binary-size(16), k::binary>> = k
+    <<kb::binary-size(16), _::binary>> = k
 
     %TorCrypto.Handshake.Keys{
-      df: Enum.fetch!(k, 0),
-      db: Enum.fetch!(k, 1),
-      kf: Enum.fetch!(k, 2),
-      kb: Enum.fetch!(k, 3)
+      df: df,
+      db: db,
+      kf: kf,
+      kb: kb
     }
   end
 end
