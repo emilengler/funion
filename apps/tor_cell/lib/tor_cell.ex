@@ -9,6 +9,7 @@ defmodule TorCell do
   defp decode_cmd(cmd) do
     case cmd do
       0 -> :padding
+      3 -> :relay
       7 -> :versions
       8 -> :netinfo
       10 -> :create2
@@ -30,6 +31,7 @@ defmodule TorCell do
   defp encode_cmd(cmd) do
     case cmd do
       :padding -> <<0>>
+      :relay -> <<3>>
       :versions -> <<7>>
       :netinfo -> <<8>>
       :create2 -> <<10>>
@@ -45,6 +47,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.encode(payload)
+        :relay -> TorCell.Relay.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :netinfo -> TorCell.Netinfo.encode(payload)
         :create2 -> TorCell.Create2.encode(payload)
@@ -95,6 +98,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.decode(payload)
+        :relay -> TorCell.Relay.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
