@@ -48,6 +48,7 @@ defmodule TorCell do
       case cmd do
         :padding -> TorCell.Padding.encode(payload)
         :relay -> TorCell.Relay.encode(payload)
+        :destroy -> TorCell.Destroy.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :netinfo -> TorCell.Netinfo.encode(payload)
         :create2 -> TorCell.Create2.encode(payload)
@@ -99,6 +100,7 @@ defmodule TorCell do
       case cmd do
         :padding -> TorCell.Padding.decode(payload)
         :relay -> TorCell.Relay.decode(payload)
+        :destroy -> TorCell.Destroy.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
