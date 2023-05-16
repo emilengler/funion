@@ -58,7 +58,7 @@ defmodule TorProto.Circuit.Initiator do
     keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
 
     state = %{
-      keys: [keys],
+      keys: keys,
       digest_forward: TorCrypto.Digest.init(keys.df),
       digest_backward: TorCrypto.Digest.init(keys.db)
     }
