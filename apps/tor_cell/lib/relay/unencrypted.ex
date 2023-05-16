@@ -111,6 +111,6 @@ defmodule TorCell.Relay.Unencrypted do
   Returns a binary corresponding to the encoded and optionally encrypted TorCell.
   """
   def encrypt(cell, keys) do
-    TorCrypto.OnionSkin.encrypt(encode(cell), keys)
+    %TorCell.Relay{onion_skin: TorCrypto.OnionSkin.encrypt(encode(cell), keys)}
   end
 end
