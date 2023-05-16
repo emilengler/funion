@@ -59,7 +59,8 @@ defmodule TorProto.Circuit.Initiator do
 
     state = %{
       keys: [keys],
-      digest: TorCrypto.Digest.init()
+      digest_forward: TorCrypto.Digest.init(keys.df),
+      digest_backward: TorCrypto.Digest.init(keys.db)
     }
 
     handler(router, circ_id, parent, state)

@@ -8,8 +8,8 @@ defmodule TorCrypto.Digest do
 
   Returns the internal representation of the state.
   """
-  def init() do
-    :crypto.hash_init(:sha)
+  def init(seed) do
+    update(:crypto.hash_init(:sha), seed)
   end
 
   @doc """
