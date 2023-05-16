@@ -10,6 +10,7 @@ defmodule TorCell do
     case cmd do
       0 -> :padding
       3 -> :relay
+      4 -> :destroy
       7 -> :versions
       8 -> :netinfo
       10 -> :create2
@@ -32,6 +33,7 @@ defmodule TorCell do
     case cmd do
       :padding -> <<0>>
       :relay -> <<3>>
+      :destroy -> <<4>>
       :versions -> <<7>>
       :netinfo -> <<8>>
       :create2 -> <<10>>
