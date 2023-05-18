@@ -4,29 +4,29 @@ defmodule TorCrypto.Digest do
   """
 
   @doc """
-  Initializes the state required for calculating the running digest.
+  Initializes the context required for calculating the running digest.
 
-  Returns the internal representation of the state.
+  Returns the internal representation of the context.
   """
   def init(seed) do
     update(:crypto.hash_init(:sha), seed)
   end
 
   @doc """
-  Updates the state with new data.
+  Updates the context with new data.
 
-  Returns a new internal representation of the state, obsoleting the previous.
+  Returns a new internal representation of the context, obsoleting the previous.
   """
-  def update(state, data) do
-    :crypto.hash_update(state, data)
+  def update(context, data) do
+    :crypto.hash_update(context, data)
   end
 
   @doc """
-  Calculates the actual digest of the state.
+  Calculates the actual digest of the context.
 
-  Returns a binary corresponding to the current digest of the state.
+  Returns a binary corresponding to the current digest of the context.
   """
-  def calculate(state) do
-    :crypto.hash_final(state)
+  def calculate(context) do
+    :crypto.hash_final(context)
   end
 end
