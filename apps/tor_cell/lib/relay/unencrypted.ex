@@ -3,13 +3,29 @@ defmodule TorCell.Relay.Unencrypted do
             stream_id: nil,
             data: nil
 
+  defp decode_cmd(cmd) do
+    case cmd do
+      1 -> :begin
+      4 -> :connected
+    end
+  end
+
+  defp decode_data(cmd, data) do
+    case cmd do
+      :begin -> TorCell.Relay.Begin.decode(data)
+      :connected -> TorCell.Relay.Connected.decode(data)
+    end
+  end
+
   defp decode(payload, context) do
     <<cmd, padding::binary>> = payload
+    cmd = decode_cmd(cmd)
     <<recognized::16, padding::binary>> = padding
     <<stream_id::16, padding::binary>> = padding
     <<digest::binary-size(4), padding::binary>> = padding
     <<length::16, padding::binary>> = padding
     <<data::binary-size(length), padding::binary>> = padding
+    data = decode_data(cmd, data)
     true = byte_size(padding) == 509 - 11 - length
 
     # The new context with the (unencrypted) payload of this cell
@@ -26,10 +42,24 @@ defmodule TorCell.Relay.Unencrypted do
     end
   end
 
+  defp encode_cmd(cmd) do
+    case cmd do
+      :begin -> <<1>>
+      :connected -> <<4>>
+    end
+  end
+
+  defp encode_data(cmd, data) do
+    case cmd do
+      :begin -> TorCell.Relay.Begin.encode(data)
+      :connected -> TorCell.Relay.Connected.encode(data)
+    end
+  end
+
   defp encode(cell, context) do
     padding_len = 509 - 11 - byte_size(cell.data)
 
-    <<cell.cmd>> <>
+    encode_cmd(cell.cmd) <>
       <<0>> <>
       <<cell.stream_id::16>> <>
       <<TorCrypto.Digest.calculate(context)::binary-size(4)>> <>
@@ -56,7 +86,7 @@ defmodule TorCell.Relay.Unencrypted do
   end
 
   @doc """
-  Encrypts a TorCell.Relay by encoding it and adding length(keys) onion skins to it.any()
+  Encrypts a TorCell.Relay by encoding it and adding length(keys) onion skins to it.
 
   TODO: Document return values
   """
