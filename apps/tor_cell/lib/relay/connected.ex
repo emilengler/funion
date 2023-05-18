@@ -2,8 +2,8 @@ defmodule TorCell.Relay.Connected do
   defstruct ip: nil,
             ttl: nil
 
-  defp decode_v4(payload) do
-    <<ip::binary-size(4), ttl::32>> = payload
+  defp decode_v4(data) do
+    <<ip::binary-size(4), ttl::32>> = data
 
     %TorCell.Relay.Connected{
       ip: List.to_tuple(:binary.bin_to_list(ip)),
@@ -11,8 +11,8 @@ defmodule TorCell.Relay.Connected do
     }
   end
 
-  defp decode_v6(payload) do
-    <<0::32, 6, ip::binary-size(16), ttl::32>> = payload
+  defp decode_v6(data) do
+    <<0::32, 6, ip::binary-size(16), ttl::32>> = data
 
     %TorCell.Relay.Connected{
       ip: List.to_tuple(:binary.bin_to_list(ip)),
@@ -29,15 +29,15 @@ defmodule TorCell.Relay.Connected do
   end
 
   @doc """
-  Decodes the payload of a RELAY_CONNECTED TorCell into its internal representation.
+  Decodes the data of a RELAY_CONNECTED TorCell into its internal representation.
 
   Returns a TorCell.Relay.Connected.
   """
-  def decode(payload) do
+  def decode(data) do
     # Determine the address type based on the length
-    case byte_size(payload) do
-      8 -> decode_v4(payload)
-      25 -> decode_v6(payload)
+    case byte_size(data) do
+      8 -> decode_v4(data)
+      25 -> decode_v6(data)
     end
   end
 

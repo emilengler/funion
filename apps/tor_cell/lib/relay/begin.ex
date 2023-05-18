@@ -4,12 +4,12 @@ defmodule TorCell.Relay.Begin do
             flags: nil
 
   @doc """
-  Decodes the payload of a RELAY_BEGIN TorCell into its internal representation.
+  Decodes the data of a RELAY_BEGIN TorCell into its internal representation.
 
   Returns a TorCell.Relay.Begin.
   """
-  def decode(payload) do
-    [addrport, <<flags::32>>] = :binary.split(payload, <<0>>)
+  def decode(data) do
+    [addrport, <<flags::32>>] = :binary.split(data, <<0>>)
 
     # TODO: Validate host
     # TODO: Convert host into octet
@@ -30,6 +30,7 @@ defmodule TorCell.Relay.Begin do
     }
   end
 
+  # TODO: Write documentation
   def encode(cell) do
     flags = 0
 
