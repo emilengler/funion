@@ -64,7 +64,7 @@ defmodule TorCell.Relay.Unencrypted do
       <<cell.stream_id::16>> <>
       <<TorCrypto.Digest.calculate(context)::binary-size(4)>> <>
       <<byte_size(cell.data)::16>> <>
-      cell.data <>
+      encode_data(cell.cmd, cell.data) <>
       <<0::integer-size(padding_len)-unit(8)>>
   end
 
