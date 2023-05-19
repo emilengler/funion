@@ -28,7 +28,7 @@ defmodule TorCrypto.OnionSkin do
     {encrypted, _} =
       :crypto.crypto_one_time_aead(:aes_128_gcm, List.last(keys), <<0>>, data, <<>>, true)
 
-    encrypt(encrypted, Enum.take(keys, length(keys - 1)))
+    encrypt(encrypted, Enum.take(keys, length(keys) - 1))
   end
 
   def encrypt(data, _) do
