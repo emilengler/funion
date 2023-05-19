@@ -57,14 +57,15 @@ defmodule TorCell.Relay.Unencrypted do
   end
 
   defp encode(cell, context) do
-    padding_len = 509 - 11 - byte_size(cell.data)
+    encoded_data = encode_data(cell.cmd, cell.data)
+    padding_len = 509 - 11 - byte_size(encoded_data)
 
     encode_cmd(cell.cmd) <>
-      <<0>> <>
+      <<0::16>> <>
       <<cell.stream_id::16>> <>
       <<TorCrypto.Digest.calculate(context)::binary-size(4)>> <>
-      <<byte_size(cell.data)::16>> <>
-      encode_data(cell.cmd, cell.data) <>
+      <<byte_size(encoded_data)::16>> <>
+      encoded_data <>
       <<0::integer-size(padding_len)-unit(8)>>
   end
 
