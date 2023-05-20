@@ -6,6 +6,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp decode_cmd(cmd) do
     case cmd do
       1 -> :begin
+      3 -> :end
       4 -> :connected
     end
   end
@@ -13,6 +14,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp decode_data(cmd, data) do
     case cmd do
       :begin -> TorCell.Relay.Begin.decode(data)
+      :end -> TorCell.Relay.End.decode(data)
       :connected -> TorCell.Relay.Connected.decode(data)
     end
   end
@@ -45,6 +47,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp encode_cmd(cmd) do
     case cmd do
       :begin -> <<1>>
+      :end -> <<3>>
       :connected -> <<4>>
     end
   end
@@ -52,6 +55,7 @@ defmodule TorCell.Relay.Unencrypted do
   defp encode_data(cmd, data) do
     case cmd do
       :begin -> TorCell.Relay.Begin.encode(data)
+      :end -> TorCell.Relay.End.encode(data)
       :connected -> TorCell.Relay.Connected.encode(data)
     end
   end
