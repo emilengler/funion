@@ -52,6 +52,6 @@ defmodule TorCell.Relay.Extend2.Spec do
   # TODO: Document this
   def encode(spec) do
     encoded = encode_spec(spec.type, spec.spec)
-    encode_type(spec.type) <> <<byte_size(encoded)::16>> <> encoded
+    encode_type(spec.type) <> <<byte_size(encoded)>> <> encoded
   end
 end
