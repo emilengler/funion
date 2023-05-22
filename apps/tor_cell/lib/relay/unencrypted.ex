@@ -8,6 +8,7 @@ defmodule TorCell.Relay.Unencrypted do
       1 -> :begin
       3 -> :end
       4 -> :connected
+      14 -> :extend2
     end
   end
 
@@ -16,6 +17,7 @@ defmodule TorCell.Relay.Unencrypted do
       :begin -> TorCell.Relay.Begin.decode(data)
       :end -> TorCell.Relay.End.decode(data)
       :connected -> TorCell.Relay.Connected.decode(data)
+      :extend2 -> TorCell.Relay.Extend2.decode(data)
     end
   end
 
@@ -49,6 +51,7 @@ defmodule TorCell.Relay.Unencrypted do
       :begin -> <<1>>
       :end -> <<3>>
       :connected -> <<4>>
+      :extend2 -> <<14>>
     end
   end
 
@@ -57,6 +60,7 @@ defmodule TorCell.Relay.Unencrypted do
       :begin -> TorCell.Relay.Begin.encode(data)
       :end -> TorCell.Relay.End.encode(data)
       :connected -> TorCell.Relay.Connected.encode(data)
+      :extend2 -> TorCell.Relay.Extend2.encode(data)
     end
   end
 
