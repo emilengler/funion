@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCellAuthChallengeTest do
   use ExUnit.Case
   doctest TorCell.AuthChallenge

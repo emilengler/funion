@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.RelayCell do
   defstruct cmd: nil,
             stream_id: nil,

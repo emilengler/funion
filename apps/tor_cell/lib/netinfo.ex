@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Netinfo do
   defstruct time: nil,
             otheraddr: nil,

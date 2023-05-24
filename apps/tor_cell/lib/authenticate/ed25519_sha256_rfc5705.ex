@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
   defstruct cid: nil,
             sid: nil,

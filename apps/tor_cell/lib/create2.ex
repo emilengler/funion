@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Create2 do
   defstruct type: nil,
             data: nil

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCrypto.Handshake.Ntor.Client do
   @doc """
   Generates the temporary client-side key pair.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Authenticate do
   defstruct type: nil,
             auth: nil

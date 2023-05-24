@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 # Used by "mix format"
 [
   inputs: ["mix.exs", "config/*.exs"],

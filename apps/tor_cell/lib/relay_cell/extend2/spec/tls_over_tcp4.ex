@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.RelayCell.Extend2.Spec.TlsOverTcp4 do
   defstruct ip: nil,
             port: nil

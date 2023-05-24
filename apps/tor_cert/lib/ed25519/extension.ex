@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCert.Ed25519.Extension do
   @moduledoc """
   Internal representation of the extensions described in Ed25519 certificates

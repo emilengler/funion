@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorDir.Router do
   defstruct nickname: nil,
             identity: nil,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCrypto.Handshake.Ntor do
   @doc """
   Generates the KEY_SEED value from the secret input.

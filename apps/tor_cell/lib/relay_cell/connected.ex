@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.RelayCell.Connected do
   defstruct ip: nil,
             ttl: nil

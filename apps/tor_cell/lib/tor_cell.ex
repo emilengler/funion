@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell do
   @moduledoc """
   Provides features for handling with various Tor Cells.

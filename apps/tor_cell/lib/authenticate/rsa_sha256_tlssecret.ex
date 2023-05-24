@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Authenticate.RsaSha256Tlssecret do
   defstruct cid: nil,
             sid: nil,

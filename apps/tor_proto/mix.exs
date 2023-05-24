@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorProto.MixProject do
   use Mix.Project
 
@@ -11,7 +13,8 @@ defmodule TorProto.MixProject do
       lockfile: "../../mix.lock",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      licenses: ["ISC"]
     ]
   end
 

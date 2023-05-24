@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCert.RsaEd25519 do
   @moduledoc """
   Provides features for handling with the RSA->Ed25519 cross-certificates

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 # This file is responsible for configuring your umbrella
 # and **all applications** and their dependencies with the
 # help of the Config module.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCrypto.Handshake.Keys do
   defstruct df: nil,
             db: nil,

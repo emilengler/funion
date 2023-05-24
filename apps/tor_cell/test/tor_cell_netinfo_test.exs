@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCellNetinfoTest do
   use ExUnit.Case
   doctest TorCell.Netinfo

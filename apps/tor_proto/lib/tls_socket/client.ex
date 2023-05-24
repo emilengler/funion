@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorProto.TlsSocket.Client do
   @moduledoc """
   Manages a TLS client.

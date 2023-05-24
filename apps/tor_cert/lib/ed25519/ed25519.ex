@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCert.Ed25519 do
   @moduledoc """
   Provides features for handling with the Ed25519 certificates specified

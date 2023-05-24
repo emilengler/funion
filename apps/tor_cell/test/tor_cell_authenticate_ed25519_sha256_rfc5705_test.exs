@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCellAuthenticateEd25519Sha256Rfc5705Test do
   use ExUnit.Case
   doctest TorCell.Authenticate.Ed25519Sha256Rfc5705

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.AuthChallenge do
   defstruct challenge: nil,
             methods: nil

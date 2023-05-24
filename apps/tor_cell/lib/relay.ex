@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Relay do
   @moduledoc """
   Implements an **encrypted** RELAY TorCell.

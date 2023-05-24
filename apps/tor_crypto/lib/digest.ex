@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCrypto.Digest do
   @moduledoc """
   Implements the running digest in a stateful fashion.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.Certs.Cert do
   defstruct type: nil,
             cert: nil

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.RelayCell.Extend2 do
   defstruct specs: nil,
             type: nil,

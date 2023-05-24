@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorProto.Channel.Initiator do
   @moduledoc """
   Manages an initiator on a channel in the Tor protocol.

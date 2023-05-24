@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.RelayCell.Extend2.Spec.LegacyIdentity do
   defstruct fingerprint: nil
 
