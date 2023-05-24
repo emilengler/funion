@@ -77,9 +77,9 @@ defmodule TorProto.Circuit.Initiator do
         }
 
         # Get the onion skin of the extend2 cell
-        cf = state[:context_forward]
-        keys_f = Enum.map(state[:keys], fn x -> x.kf end)
-        {onion_skin, cf} = TorCell.RelayCell.encrypt(extend2, cf, keys_f)
+        cf = List.last(state[:hops]).cf
+        kfs = Enum.map(state[:hops], fn x -> x.kf end)
+        {onion_skin, cf} = TorCell.RelayCell.encrypt(extend2, cf, kfs)
 
         # Place the extend2 cell into a TorCell
         extend2 = %TorCell{
@@ -93,11 +93,10 @@ defmodule TorProto.Circuit.Initiator do
         # Receive an EXTENDED2 TorCell
         extended2 = recv_cell()
 
-        cb = state[:context_backward]
-        keys_b = Enum.map(state[:keys], fn x -> x.kb end)
+        cb = List.last(state[:hops]).cb
+        kbs = Enum.map(state[:hops], fn x -> x.kb end)
 
-        {true, extended2, cb} =
-          TorCell.RelayCell.decrypt(extended2.payload.onion_skin, cb, keys_b)
+        {true, extended2, cb} = TorCell.RelayCell.decrypt(extended2.payload.onion_skin, cb, kbs)
 
         %TorCell.RelayCell{cmd: :extended2, data: %TorCell.RelayCell.Extended2{data: data}} =
           extended2
@@ -155,9 +154,14 @@ defmodule TorProto.Circuit.Initiator do
     keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
 
     state = %{
-      keys: [keys],
-      context_forward: TorCrypto.Digest.init(keys.df),
-      context_backward: TorCrypto.Digest.init(keys.db)
+      hops: [
+        %{
+          kf: keys.kf,
+          kb: keys.kb,
+          cf: TorCrypto.Digest.init(keys.df),
+          cb: TorCrypto.Digest.init(keys.db)
+        }
+      ]
     }
 
     handler(router, circ_id, parent, state)
