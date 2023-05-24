@@ -42,7 +42,7 @@ defmodule TorCell.RelayCell do
         TorCrypto.Digest.update(context, payload)
       }
     else
-      {false, %TorCell.Relay{onion_skin: payload}, context}
+      {false, payload, context}
     end
   end
 
@@ -99,21 +99,21 @@ defmodule TorCell.RelayCell do
   end
 
   @doc """
-  Decrypts a TorCell.Relay by removing length(keys) onion skins from it.
+  Decrypts an onion skin by removing length(keys) onion skins from it.
 
   TODO: Document return values
   """
-  def decrypt(cell, context, keys) do
-    decode(TorCrypto.OnionSkin.decrypt(cell.onion_skin, keys), context)
+  def decrypt(onion_skin, context, keys) do
+    decode(TorCrypto.OnionSkin.decrypt(onion_skin, keys), context)
   end
 
   @doc """
-  Encrypts a TorCell.Relay by encoding it and adding length(keys) onion skins to it.
+  Encrypts a TorCell.RelayCell by encoding it and adding length(keys) onion skins to it.
 
   TODO: Document return values
   """
   def encrypt(cell, context, keys) do
     {encoded, context} = encode(cell, context)
-    {%TorCell.Relay{onion_skin: TorCrypto.OnionSkin.encrypt(encoded, keys)}, context}
+    {TorCrypto.OnionSkin.encrypt(encoded, keys), context}
   end
 end
