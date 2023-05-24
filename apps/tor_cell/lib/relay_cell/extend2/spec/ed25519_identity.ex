@@ -1,10 +1,10 @@
-defmodule TorCell.Relay.Extend2.Spec.Ed25519Identity do
+defmodule TorCell.RelayCell.Extend2.Spec.Ed25519Identity do
   defstruct fingerprint: nil
 
   # TODO: Document this
   def decode(spec) do
     true = byte_size(spec) == 32
-    %TorCell.Relay.Extend2.Spec.Ed25519Identity{fingerprint: spec}
+    %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: spec}
   end
 
   # TODO: Document this

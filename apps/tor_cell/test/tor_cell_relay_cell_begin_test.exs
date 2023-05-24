@@ -1,10 +1,10 @@
-defmodule TorCellRelayBeginTest do
+defmodule TorCellRelayCellBeginTest do
   use ExUnit.Case
-  doctest TorCell.Relay.Begin
+  doctest TorCell.RelayCell.Begin
 
   test "decodes a RELAY_BEGIN TorCell" do
-    assert TorCell.Relay.Begin.decode("example.com:2022" <> <<0>> <> <<7::32>>) ==
-             %TorCell.Relay.Begin{
+    assert TorCell.RelayCell.Begin.decode("example.com:2022" <> <<0>> <> <<7::32>>) ==
+             %TorCell.RelayCell.Begin{
                host: "example.com",
                port: 2022,
                flags: %{
@@ -16,7 +16,7 @@ defmodule TorCellRelayBeginTest do
   end
 
   test "encodes a RELAY_BEGIN TorCell" do
-    cell = %TorCell.Relay.Begin{
+    cell = %TorCell.RelayCell.Begin{
       host: "example.com",
       port: 2022,
       flags: %{
@@ -26,6 +26,6 @@ defmodule TorCellRelayBeginTest do
       }
     }
 
-    assert TorCell.Relay.Begin.encode(cell) == "example.com:2022" <> <<0>> <> <<5::32>>
+    assert TorCell.RelayCell.Begin.encode(cell) == "example.com:2022" <> <<0>> <> <<5::32>>
   end
 end

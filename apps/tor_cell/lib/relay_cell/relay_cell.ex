@@ -1,4 +1,4 @@
-defmodule TorCell.Relay.Unencrypted do
+defmodule TorCell.RelayCell do
   defstruct cmd: nil,
             stream_id: nil,
             data: nil
@@ -14,10 +14,10 @@ defmodule TorCell.Relay.Unencrypted do
 
   defp decode_data(cmd, data) do
     case cmd do
-      :begin -> TorCell.Relay.Begin.decode(data)
-      :end -> TorCell.Relay.End.decode(data)
-      :connected -> TorCell.Relay.Connected.decode(data)
-      :extend2 -> TorCell.Relay.Extend2.decode(data)
+      :begin -> TorCell.RelayCell.Begin.decode(data)
+      :end -> TorCell.RelayCell.End.decode(data)
+      :connected -> TorCell.RelayCell.Connected.decode(data)
+      :extend2 -> TorCell.RelayCell.Extend2.decode(data)
     end
   end
 
@@ -38,7 +38,7 @@ defmodule TorCell.Relay.Unencrypted do
     if is_decrypted?(recognized, digest, tmp_context) do
       {
         true,
-        %TorCell.Relay.Unencrypted{cmd: cmd, stream_id: stream_id, data: data},
+        %TorCell.RelayCell{cmd: cmd, stream_id: stream_id, data: data},
         TorCrypto.Digest.update(context, payload)
       }
     else
@@ -57,10 +57,10 @@ defmodule TorCell.Relay.Unencrypted do
 
   defp encode_data(cmd, data) do
     case cmd do
-      :begin -> TorCell.Relay.Begin.encode(data)
-      :end -> TorCell.Relay.End.encode(data)
-      :connected -> TorCell.Relay.Connected.encode(data)
-      :extend2 -> TorCell.Relay.Extend2.encode(data)
+      :begin -> TorCell.RelayCell.Begin.encode(data)
+      :end -> TorCell.RelayCell.End.encode(data)
+      :connected -> TorCell.RelayCell.Connected.encode(data)
+      :extend2 -> TorCell.RelayCell.Extend2.encode(data)
     end
   end
 

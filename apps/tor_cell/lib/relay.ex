@@ -3,10 +3,7 @@ defmodule TorCell.Relay do
   Implements an **encrypted** RELAY TorCell.
 
   This is more of an intermediate representation between TorCell and
-  TorCell.Relay.Unencrypted
-
-  TODO: Consider renaming this to TorCell.Relay.Encrypted, although this
-  may loose the semantic of its role as an intermediate layer.
+  TorCell.RelayCell.
   """
   defstruct onion_skin: nil
 

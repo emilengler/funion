@@ -1,11 +1,11 @@
-defmodule TorCell.Relay.Connected do
+defmodule TorCell.RelayCell.Connected do
   defstruct ip: nil,
             ttl: nil
 
   defp decode_v4(data) do
     <<ip::binary-size(4), ttl::32>> = data
 
-    %TorCell.Relay.Connected{
+    %TorCell.RelayCell.Connected{
       ip: List.to_tuple(:binary.bin_to_list(ip)),
       ttl: ttl
     }
@@ -14,7 +14,7 @@ defmodule TorCell.Relay.Connected do
   defp decode_v6(data) do
     <<0::32, 6, ip::binary-size(16), ttl::32>> = data
 
-    %TorCell.Relay.Connected{
+    %TorCell.RelayCell.Connected{
       ip: List.to_tuple(:binary.bin_to_list(ip)),
       ttl: ttl
     }

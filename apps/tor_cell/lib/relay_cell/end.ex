@@ -1,4 +1,4 @@
-defmodule TorCell.Relay.End do
+defmodule TorCell.RelayCell.End do
   defstruct reason: nil,
             ip: nil,
             ttl: nil
@@ -26,7 +26,7 @@ defmodule TorCell.Relay.End do
     <<ip4::binary-size(4), payload::binary>> = payload
     ip4 = List.to_tuple(:binary.bin_to_list(ip4))
     <<ttl::32, _::binary>> = payload
-    %TorCell.Relay.End{reason: :exitpolicy, ip: ip4, ttl: ttl}
+    %TorCell.RelayCell.End{reason: :exitpolicy, ip: ip4, ttl: ttl}
   end
 
   # TODO: Consider removing redundancy here
@@ -34,7 +34,7 @@ defmodule TorCell.Relay.End do
     <<ip6::binary-size(16), payload::binary>> = payload
     ip6 = List.to_tuple(:binary.bin_to_list(ip6))
     <<ttl::32, _::binary>> = payload
-    %TorCell.Relay.End{reason: :exitpolicy, ip: ip6, ttl: ttl}
+    %TorCell.RelayCell.End{reason: :exitpolicy, ip: ip6, ttl: ttl}
   end
 
   defp decode_exitpolicy(payload) do
@@ -53,7 +53,7 @@ defmodule TorCell.Relay.End do
     if reason == :exitpolicy do
       decode_exitpolicy(payload)
     else
-      %TorCell.Relay.End{reason: reason}
+      %TorCell.RelayCell.End{reason: reason}
     end
   end
 

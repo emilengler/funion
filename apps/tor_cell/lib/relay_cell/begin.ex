@@ -1,4 +1,4 @@
-defmodule TorCell.Relay.Begin do
+defmodule TorCell.RelayCell.Begin do
   defstruct host: nil,
             port: nil,
             flags: nil
@@ -6,7 +6,7 @@ defmodule TorCell.Relay.Begin do
   @doc """
   Decodes the data of a RELAY_BEGIN TorCell into its internal representation.
 
-  Returns a TorCell.Relay.Begin.
+  Returns a TorCell.RelayCell.Begin.
   """
   def decode(data) do
     [addrport, <<flags::32>>] = :binary.split(data, <<0>>)
@@ -23,7 +23,7 @@ defmodule TorCell.Relay.Begin do
       ipv6_preferred: Bitwise.band(Bitwise.bsr(flags, 2), 1) == 1
     }
 
-    %TorCell.Relay.Begin{
+    %TorCell.RelayCell.Begin{
       host: host,
       port: port,
       flags: flags

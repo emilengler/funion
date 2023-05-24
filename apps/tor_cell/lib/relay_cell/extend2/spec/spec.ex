@@ -1,4 +1,4 @@
-defmodule TorCell.Relay.Extend2.Spec do
+defmodule TorCell.RelayCell.Extend2.Spec do
   defstruct type: nil,
             spec: nil
 
@@ -13,10 +13,10 @@ defmodule TorCell.Relay.Extend2.Spec do
 
   defp decode_spec(type, spec) do
     case type do
-      :tls_over_tcp4 -> TorCell.Relay.Extend2.Spec.TlsOverTcp4.decode(spec)
-      :tls_over_tcp6 -> TorCell.Relay.Extend2.Spec.TlsOverTcp6.decode(spec)
-      :legacy_identity -> TorCell.Relay.Extend2.Spec.LegacyIdentity.decode(spec)
-      :ed25519_identity -> TorCell.Relay.Extend2.Spec.Ed25519Identity.decode(spec)
+      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.decode(spec)
+      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.decode(spec)
+      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.decode(spec)
+      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.decode(spec)
     end
   end
 
@@ -31,10 +31,10 @@ defmodule TorCell.Relay.Extend2.Spec do
 
   defp encode_spec(type, spec) do
     case type do
-      :tls_over_tcp4 -> TorCell.Relay.Extend2.Spec.TlsOverTcp4.encode(spec)
-      :tls_over_tcp6 -> TorCell.Relay.Extend2.Spec.TlsOverTcp6.encode(spec)
-      :legacy_identity -> TorCell.Relay.Extend2.Spec.LegacyIdentity.encode(spec)
-      :ed25519_identity -> TorCell.Relay.Extend2.Spec.Ed25519Identity.encode(spec)
+      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.encode(spec)
+      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.encode(spec)
+      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.encode(spec)
+      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.encode(spec)
     end
   end
 
@@ -46,7 +46,7 @@ defmodule TorCell.Relay.Extend2.Spec do
     <<spec::binary-size(len), payload::binary>> = payload
     spec = decode_spec(type, spec)
 
-    {%TorCell.Relay.Extend2.Spec{type: type, spec: spec}, payload}
+    {%TorCell.RelayCell.Extend2.Spec{type: type, spec: spec}, payload}
   end
 
   # TODO: Document this
