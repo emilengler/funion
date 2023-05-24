@@ -19,6 +19,36 @@ defmodule TorProto.Circuit.Initiator do
     end
   end
 
+  defp ntor_handshake(create, created, router, parent) do
+    b = router.keys.x25519_ntor
+    id = router.identity
+    {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
+
+    # Create the CREATE2 cell
+    # The closure gets the stage2 of the ntor handshake and must return a %TorCell
+    cell = create.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
+    :ok = send_cell(cell, parent)
+
+    # The closure gets the CREATED2/EXTENDED2 cell and must return its data field
+    data = created.(recv_cell())
+
+    <<y::binary-size(32), data::binary>> = data
+    <<auth::binary-size(32), data::binary>> = data
+
+    # TODO: Check if Y is in G^
+
+    secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
+    true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
+    keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
+
+    %{
+      kf: keys.kf,
+      kb: keys.kb,
+      cf: TorCrypto.Digest.init(keys.df),
+      cb: TorCrypto.Digest.init(keys.db)
+    }
+  end
+
   defp handler(router, circ_id, parent, state) do
     receive do
       {:extend, router, pid} ->
@@ -60,59 +90,45 @@ defmodule TorProto.Circuit.Initiator do
               ]
           end
 
-        # Prepare the ntor handshake
-        {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
-        b = router.keys.x25519_ntor
-        id = router.identity
-
-        # Generate the cell with the appropriate ntor handshake
-        extend2 = %TorCell.RelayCell{
-          cmd: :extend2,
-          stream_id: 0,
-          data: %TorCell.RelayCell.Extend2{
-            specs: specs,
-            type: :ntor,
-            data: TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk)
+        extend2 = fn data ->
+          cell = %TorCell.RelayCell{
+            cmd: :extend2,
+            stream_id: 0,
+            data: %TorCell.RelayCell.Extend2{specs: specs, type: :ntor, data: data}
           }
-        }
 
-        # Get the onion skin of the extend2 cell
-        cf = List.last(state[:hops]).cf
-        kfs = Enum.map(state[:hops], fn x -> x.kf end)
-        {onion_skin, cf} = TorCell.RelayCell.encrypt(extend2, cf, kfs)
+          cf = List.last(state[:hops]).cf
+          kfs = Enum.map(state[:hops], fn x -> x.kf end)
+          {onion_skin, cf} = TorCell.RelayCell.encrypt(cell, cf, kfs)
 
-        # Place the extend2 cell into a TorCell
-        extend2 = %TorCell{
-          circ_id: circ_id,
-          cmd: :relay_early,
-          payload: %TorCell.RelayEarly{onion_skin: onion_skin}
-        }
+          %TorCell{
+            circ_id: circ_id,
+            cmd: :relay_early,
+            payload: %TorCell.RelayEarly{onion_skin: onion_skin}
+          }
+        end
 
-        :ok = send_cell(extend2, parent)
+        extended2 = fn cell ->
+          %TorCell{
+            circ_id: ^circ_id,
+            cmd: :relay,
+            payload: %TorCell.Relay{onion_skin: onion_skin}
+          } = cell
 
-        # Receive an EXTENDED2 TorCell
-        extended2 = recv_cell()
+          cb = List.last(state[:hops]).cb
+          kbs = Enum.map(state[:hops], fn x -> x.kb end)
+          {true, cell, cb} = TorCell.RelayCell.decrypt(onion_skin, cb, kbs)
 
-        cb = List.last(state[:hops]).cb
-        kbs = Enum.map(state[:hops], fn x -> x.kb end)
+          %TorCell.RelayCell{
+            cmd: :extended2,
+            stream_id: 0,
+            data: %TorCell.RelayCell.Extended2{data: data}
+          } = cell
 
-        {true, extended2, cb} = TorCell.RelayCell.decrypt(extended2.payload.onion_skin, cb, kbs)
+          data
+        end
 
-        %TorCell.RelayCell{cmd: :extended2, data: %TorCell.RelayCell.Extended2{data: data}} =
-          extended2
-
-        # Finalize the handshake
-        <<y::binary-size(32), data::binary>> = data
-        <<auth::binary-size(32), _::binary>> = data
-
-        # TODO: Check if Y is in G^
-
-        secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
-        true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
-        keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
-
-        send(pid, {:extend, :ok})
-
+        hop = ntor_handshake(extend2, extended2, router, parent)
         # TODO: Update the state
     end
   end
@@ -126,43 +142,21 @@ defmodule TorProto.Circuit.Initiator do
   Returns the PID of the new process managing the circuit.
   """
   def init(router, circ_id, parent) do
-    b = router.keys.x25519_ntor
-    id = router.identity
-    {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
-
-    create2 = %TorCell{
-      circ_id: circ_id,
-      cmd: :create2,
-      payload: %TorCell.Create2{
-        type: :ntor,
-        data: TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk)
+    create2 = fn data ->
+      %TorCell{
+        circ_id: circ_id,
+        cmd: :create2,
+        payload: %TorCell.Create2{type: :ntor, data: data}
       }
-    }
+    end
 
-    :ok = send_cell(create2, parent)
+    created2 = fn cell ->
+      %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{data: data}} = cell
+      data
+    end
 
-    created2 = recv_cell()
-    %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{data: data}} = created2
-
-    <<y::binary-size(32), data::binary>> = data
-    <<auth::binary-size(32), _::binary>> = data
-
-    # TODO: Check if Y is in G^
-
-    secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
-    true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
-    keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
-
-    state = %{
-      hops: [
-        %{
-          kf: keys.kf,
-          kb: keys.kb,
-          cf: TorCrypto.Digest.init(keys.df),
-          cb: TorCrypto.Digest.init(keys.db)
-        }
-      ]
-    }
+    hop = ntor_handshake(create2, created2, router, parent)
+    state = %{hops: [hop]}
 
     handler(router, circ_id, parent, state)
   end
