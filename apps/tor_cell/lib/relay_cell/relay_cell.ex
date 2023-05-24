@@ -9,6 +9,7 @@ defmodule TorCell.RelayCell do
       3 -> :end
       4 -> :connected
       14 -> :extend2
+      15 -> :extended2
     end
   end
 
@@ -18,6 +19,7 @@ defmodule TorCell.RelayCell do
       :end -> TorCell.RelayCell.End.decode(data)
       :connected -> TorCell.RelayCell.Connected.decode(data)
       :extend2 -> TorCell.RelayCell.Extend2.decode(data)
+      :extended2 -> TorCell.RelayCell.Extended2.decode(data)
     end
   end
 
@@ -52,6 +54,7 @@ defmodule TorCell.RelayCell do
       :end -> <<3>>
       :connected -> <<4>>
       :extend2 -> <<14>>
+      :extended2 -> <<15>>
     end
   end
 
@@ -61,6 +64,7 @@ defmodule TorCell.RelayCell do
       :end -> TorCell.RelayCell.End.encode(data)
       :connected -> TorCell.RelayCell.Connected.encode(data)
       :extend2 -> TorCell.RelayCell.Extend2.encode(data)
+      :extended2 -> TorCell.RelayCell.Extended2.encode(data)
     end
   end
 
