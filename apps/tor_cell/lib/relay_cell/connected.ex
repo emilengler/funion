@@ -31,7 +31,7 @@ defmodule TorCell.RelayCell.Connected do
   @doc """
   Decodes the data of a RELAY_CONNECTED TorCell into its internal representation.
 
-  Returns a TorCell.Relay.Connected.
+  Returns a TorCell.RelayCell.Connected.
   """
   def decode(data) do
     # Determine the address type based on the length
@@ -42,7 +42,7 @@ defmodule TorCell.RelayCell.Connected do
   end
 
   @doc """
-  Encodes a TorCell.Relay.Connected into a binary.
+  Encodes a TorCell.RelayCell.Connected into a binary.
 
   Returns a binary corresponding to the binary representation of that TorCell.
   """
