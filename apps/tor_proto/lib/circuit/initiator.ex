@@ -25,12 +25,14 @@ defmodule TorProto.Circuit.Initiator do
     {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
 
     # Create the CREATE2 cell
-    # The closure gets the stage2 of the ntor handshake and must return a %TorCell
-    cell = create.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
+    # The closure gets the stage2 of the ntor handshake and must return a %TorCell alongside
+    # the updated forward context
+    {cell, cf} = create.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
     :ok = send_cell(cell, parent)
 
-    # The closure gets the CREATED2/EXTENDED2 cell and must return its data field
-    data = created.(recv_cell())
+    # The closure gets the CREATED2/EXTENDED2 cell and must return its data field alongside
+    # the updated backward context
+    {data, cb} = created.(recv_cell())
 
     <<y::binary-size(32), data::binary>> = data
     <<auth::binary-size(32), data::binary>> = data
@@ -41,15 +43,19 @@ defmodule TorProto.Circuit.Initiator do
     true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
     keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
 
-    %{
-      kf: keys.kf,
-      kb: keys.kb,
-      cf: TorCrypto.Digest.init(keys.df),
-      cb: TorCrypto.Digest.init(keys.db)
+    {
+      %{
+        kf: keys.kf,
+        kb: keys.kb,
+        cf: TorCrypto.Digest.init(keys.df),
+        cb: TorCrypto.Digest.init(keys.db)
+      },
+      cf,
+      cb
     }
   end
 
-  defp handler(router, circ_id, parent, state) do
+  defp handler(circ_id, parent, state) do
     receive do
       {:extend, router, pid} ->
         # Generate the specs field
@@ -101,10 +107,13 @@ defmodule TorProto.Circuit.Initiator do
           kfs = Enum.map(state[:hops], fn x -> x.kf end)
           {onion_skin, cf} = TorCell.RelayCell.encrypt(cell, cf, kfs)
 
-          %TorCell{
-            circ_id: circ_id,
-            cmd: :relay_early,
-            payload: %TorCell.RelayEarly{onion_skin: onion_skin}
+          {
+            %TorCell{
+              circ_id: circ_id,
+              cmd: :relay_early,
+              payload: %TorCell.RelayEarly{onion_skin: onion_skin}
+            },
+            cf
           }
         end
 
@@ -125,11 +134,18 @@ defmodule TorProto.Circuit.Initiator do
             data: %TorCell.RelayCell.Extended2{data: data}
           } = cell
 
-          data
+          {data, cb}
         end
 
-        hop = ntor_handshake(extend2, extended2, router, parent)
-        # TODO: Update the state
+        {next_hop, cf, cb} = ntor_handshake(extend2, extended2, router, parent)
+
+        # Update the state
+        hop = List.last(state[:hops])
+        hop = %{kf: hop.kf, kb: hop.kb, cf: cf, cb: cb}
+        state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
+        state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
+
+        handler(circ_id, parent, state)
     end
   end
 
@@ -143,21 +159,24 @@ defmodule TorProto.Circuit.Initiator do
   """
   def init(router, circ_id, parent) do
     create2 = fn data ->
-      %TorCell{
-        circ_id: circ_id,
-        cmd: :create2,
-        payload: %TorCell.Create2{type: :ntor, data: data}
+      {
+        %TorCell{
+          circ_id: circ_id,
+          cmd: :create2,
+          payload: %TorCell.Create2{type: :ntor, data: data}
+        },
+        nil
       }
     end
 
     created2 = fn cell ->
       %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{data: data}} = cell
-      data
+      {data, nil}
     end
 
-    hop = ntor_handshake(create2, created2, router, parent)
+    {hop, nil, nil} = ntor_handshake(create2, created2, router, parent)
     state = %{hops: [hop]}
 
-    handler(router, circ_id, parent, state)
+    handler(circ_id, parent, state)
   end
 end
