@@ -145,6 +145,7 @@ defmodule TorProto.Circuit.Initiator do
         state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
         state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
 
+        send(pid, {:extend, :ok})
         handler(circ_id, parent, state)
     end
   end
