@@ -9,7 +9,7 @@ defmodule TorCrypto.OnionSkin do
   Returns a binary corresponding to the decrypted onion skin.
   """
   def decrypt(data, keys) when length(keys) > 0 do
-    decrypt(:crypto.crypto_one_time(:aes_ctr, List.last(keys), <<0::128>>, data, false), tl(keys))
+    decrypt(:crypto.crypto_one_time(:aes_ctr, hd(keys), <<0::128>>, data, false), tl(keys))
   end
 
   def decrypt(data, _) do
