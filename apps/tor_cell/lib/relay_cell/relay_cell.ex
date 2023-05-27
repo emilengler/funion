@@ -8,6 +8,7 @@ defmodule TorCell.RelayCell do
   defp decode_cmd(cmd) do
     case cmd do
       1 -> :begin
+      2 -> :data
       3 -> :end
       4 -> :connected
       14 -> :extend2
@@ -18,6 +19,7 @@ defmodule TorCell.RelayCell do
   defp decode_data(cmd, data) do
     case cmd do
       :begin -> TorCell.RelayCell.Begin.decode(data)
+      :data -> TorCell.RelayCell.Data.decode(data)
       :end -> TorCell.RelayCell.End.decode(data)
       :connected -> TorCell.RelayCell.Connected.decode(data)
       :extend2 -> TorCell.RelayCell.Extend2.decode(data)
@@ -53,6 +55,7 @@ defmodule TorCell.RelayCell do
   defp encode_cmd(cmd) do
     case cmd do
       :begin -> <<1>>
+      :data -> <<2>>
       :end -> <<3>>
       :connected -> <<4>>
       :extend2 -> <<14>>
@@ -63,6 +66,7 @@ defmodule TorCell.RelayCell do
   defp encode_data(cmd, data) do
     case cmd do
       :begin -> TorCell.RelayCell.Begin.encode(data)
+      :data -> TorCell.RelayCell.Data.encode(data)
       :end -> TorCell.RelayCell.End.encode(data)
       :connected -> TorCell.RelayCell.Connected.encode(data)
       :extend2 -> TorCell.RelayCell.Extend2.encode(data)
