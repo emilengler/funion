@@ -29,12 +29,12 @@ defmodule TorProto.Circuit.Initiator do
     # Create the CREATE2 cell
     # The closure gets the stage2 of the ntor handshake and must return a %TorCell alongside
     # the updated forward context
-    {cell, cf} = create.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
+    {cell, df} = create.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
     :ok = send_cell(cell, parent)
 
     # The closure gets the CREATED2/EXTENDED2 cell and must return its data field alongside
     # the updated backward context
-    {data, cb} = created.(recv_cell())
+    {data, db} = created.(recv_cell())
 
     <<y::binary-size(32), data::binary>> = data
     <<auth::binary-size(32), data::binary>> = data
@@ -49,11 +49,11 @@ defmodule TorProto.Circuit.Initiator do
       %{
         kf: TorCrypto.OnionSkin.init(keys.kf, true),
         kb: TorCrypto.OnionSkin.init(keys.kb, false),
-        cf: TorCrypto.Digest.init(keys.df),
-        cb: TorCrypto.Digest.init(keys.db)
+        df: TorCrypto.Digest.init(keys.df),
+        db: TorCrypto.Digest.init(keys.db)
       },
-      cf,
-      cb
+      df,
+      db
     }
   end
 
@@ -105,9 +105,9 @@ defmodule TorProto.Circuit.Initiator do
             data: %TorCell.RelayCell.Extend2{specs: specs, type: :ntor, data: data}
           }
 
-          cf = List.last(state[:hops]).cf
+          df = List.last(state[:hops]).df
           kfs = Enum.map(state[:hops], fn x -> x.kf end)
-          {onion_skin, cf} = TorCell.RelayCell.encrypt(kfs, cf, cell)
+          {onion_skin, df} = TorCell.RelayCell.encrypt(kfs, df, cell)
 
           {
             %TorCell{
@@ -115,7 +115,7 @@ defmodule TorProto.Circuit.Initiator do
               cmd: :relay_early,
               payload: %TorCell.RelayEarly{onion_skin: onion_skin}
             },
-            cf
+            df
           }
         end
 
@@ -126,9 +126,9 @@ defmodule TorProto.Circuit.Initiator do
             payload: %TorCell.Relay{onion_skin: onion_skin}
           } = cell
 
-          cb = List.last(state[:hops]).cb
+          db = List.last(state[:hops]).db
           kbs = Enum.map(state[:hops], fn x -> x.kb end)
-          {true, cell, cb} = TorCell.RelayCell.decrypt(kbs, cb, onion_skin)
+          {true, cell, db} = TorCell.RelayCell.decrypt(kbs, db, onion_skin)
 
           %TorCell.RelayCell{
             cmd: :extended2,
@@ -136,14 +136,14 @@ defmodule TorProto.Circuit.Initiator do
             data: %TorCell.RelayCell.Extended2{data: data}
           } = cell
 
-          {data, cb}
+          {data, db}
         end
 
-        {next_hop, cf, cb} = ntor_handshake(extend2, extended2, router, parent)
+        {next_hop, df, db} = ntor_handshake(extend2, extended2, router, parent)
 
         # Update the state
         hop = List.last(state[:hops])
-        hop = %{kf: hop.kf, kb: hop.kb, cf: cf, cb: cb}
+        hop = %{kf: hop.kf, kb: hop.kb, df: df, db: db}
         state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
         state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
 
