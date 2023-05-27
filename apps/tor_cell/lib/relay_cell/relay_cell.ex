@@ -105,21 +105,21 @@ defmodule TorCell.RelayCell do
   end
 
   @doc """
-  Decrypts an onion skin by removing length(keys) onion skins from it.
+  Decrypts an onion skin by removing length(streams) onion skins from it.
 
   TODO: Document return values
   """
-  def decrypt(onion_skin, context, keys) do
-    decode(TorCrypto.OnionSkin.decrypt(onion_skin, keys), context)
+  def decrypt(streams, context, onion_skin) do
+    decode(TorCrypto.OnionSkin.decrypt(streams, onion_skin), context)
   end
 
   @doc """
-  Encrypts a TorCell.RelayCell by encoding it and adding length(keys) onion skins to it.
+  Encrypts a TorCell.RelayCell by encoding it and adding length(streams) onion skins to it.
 
   TODO: Document return values
   """
-  def encrypt(cell, context, keys) do
+  def encrypt(streams, context, cell) do
     {encoded, context} = encode(cell, context)
-    {TorCrypto.OnionSkin.encrypt(encoded, keys), context}
+    {TorCrypto.OnionSkin.encrypt(streams, encoded), context}
   end
 end

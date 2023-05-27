@@ -47,8 +47,8 @@ defmodule TorProto.Circuit.Initiator do
 
     {
       %{
-        kf: keys.kf,
-        kb: keys.kb,
+        kf: TorCrypto.OnionSkin.init(keys.kf, true),
+        kb: TorCrypto.OnionSkin.init(keys.kb, false),
         cf: TorCrypto.Digest.init(keys.df),
         cb: TorCrypto.Digest.init(keys.db)
       },
@@ -107,7 +107,7 @@ defmodule TorProto.Circuit.Initiator do
 
           cf = List.last(state[:hops]).cf
           kfs = Enum.map(state[:hops], fn x -> x.kf end)
-          {onion_skin, cf} = TorCell.RelayCell.encrypt(cell, cf, kfs)
+          {onion_skin, cf} = TorCell.RelayCell.encrypt(kfs, cf, cell)
 
           {
             %TorCell{
@@ -128,7 +128,7 @@ defmodule TorProto.Circuit.Initiator do
 
           cb = List.last(state[:hops]).cb
           kbs = Enum.map(state[:hops], fn x -> x.kb end)
-          {true, cell, cb} = TorCell.RelayCell.decrypt(onion_skin, cb, kbs)
+          {true, cell, cb} = TorCell.RelayCell.decrypt(kbs, cb, onion_skin)
 
           %TorCell.RelayCell{
             cmd: :extended2,
