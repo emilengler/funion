@@ -7,7 +7,7 @@ defmodule TorCrypto.OnionSkin do
   Returns the internal representation of the stream.
   """
   def init(key, encrypt) do
-    :crypto.crypto_init(:aes_ctr, key, <<0::128>>, encrypt)
+    :crypto.crypto_init(:aes_128_ctr, key, <<0::128>>, encrypt)
   end
 
   @doc """
