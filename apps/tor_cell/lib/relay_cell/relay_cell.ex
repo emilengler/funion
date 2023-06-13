@@ -39,13 +39,13 @@ defmodule TorCell.RelayCell do
     true = byte_size(padding) == 509 - 11 - length
 
     # The context with this cell's payload but digest set to zero
-    tmp_context = TorCrypto.Digest.update(context, modify_digest(payload, <<0::32>>))
+    context = TorCrypto.Digest.update(context, modify_digest(payload, <<0::32>>))
 
-    if is_decrypted?(recognized, digest, tmp_context) do
+    if is_decrypted?(recognized, digest, context) do
       {
         true,
         %TorCell.RelayCell{cmd: cmd, stream_id: stream_id, data: data},
-        TorCrypto.Digest.update(context, payload)
+        context
       }
     else
       {false, payload, context}
@@ -88,10 +88,10 @@ defmodule TorCell.RelayCell do
         <<0::integer-size(padding_len)-unit(8)>>
 
     # The context with this cell's payload but digest set to zero
-    tmp_context = TorCrypto.Digest.update(context, encoded)
-    encoded = modify_digest(encoded, <<TorCrypto.Digest.calculate(tmp_context)::binary-size(4)>>)
+    context = TorCrypto.Digest.update(context, encoded)
+    encoded = modify_digest(encoded, <<TorCrypto.Digest.calculate(context)::binary-size(4)>>)
 
-    {encoded, TorCrypto.Digest.update(context, encoded)}
+    {encoded, context}
   end
 
   defp is_decrypted?(recognized, digest, context) do
