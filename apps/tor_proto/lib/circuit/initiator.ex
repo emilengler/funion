@@ -7,6 +7,16 @@ defmodule TorProto.Circuit.Initiator do
   TODO: Do the handshakes in some sort of a separate function.
   """
 
+  defp gen_stream_id(streams) do
+    stream_id = Enum.random(1..(2 ** 16 - 1))
+
+    if Map.fetch(streams, stream_id) == :error do
+      stream_id
+    else
+      gen_stream_id(streams)
+    end
+  end
+
   defp recv_cell() do
     receive do
       {:recv_cell, cell} -> cell
@@ -59,6 +69,18 @@ defmodule TorProto.Circuit.Initiator do
 
   defp handler(circ_id, parent, state) do
     receive do
+      {:connect, host, port, pid} ->
+        ourself = self()
+        stream_id = gen_stream_id(state[:streams])
+
+        stream =
+          spawn_link(fn -> TorProto.Stream.Initiator.init(host, port, stream_id, ourself, pid) end)
+
+        send(pid, {:connect, stream})
+
+        state = Map.replace!(state, :streams, Map.put(state[:streams], stream_id, stream))
+        handler(circ_id, parent, state)
+
       {:extend, router, pid} ->
         # Generate the specs field
         specs = [
@@ -149,6 +171,49 @@ defmodule TorProto.Circuit.Initiator do
 
         send(pid, {:extend, :ok})
         handler(circ_id, parent, state)
+
+      {:recv_cell, cell} ->
+        %TorCell{circ_id: ^circ_id, cmd: cmd, payload: payload} = cell
+
+        state =
+          case cmd do
+            :relay ->
+              kbs = Enum.map(state[:hops], fn x -> x.kb end)
+              db = List.last(state[:hops]).db
+              {true, relay_cell, db} = TorCell.RelayCell.decrypt(kbs, db, payload.onion_skin)
+
+              send(
+                Map.fetch!(state[:streams], relay_cell.stream_id),
+                {:recv_relay_cell, relay_cell}
+              )
+
+              hop = List.last(state[:hops])
+              hop = %{kf: hop.kf, kb: hop.kb, df: hop.df, db: db}
+              Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
+          end
+
+        handler(circ_id, parent, state)
+
+      {:send_relay_cell, relay_cell, pid} ->
+        kfs = Enum.map(state[:hops], fn x -> x.kf end)
+        df = List.last(state[:hops]).df
+        {onion_skin, df} = TorCell.RelayCell.encrypt(kfs, df, relay_cell)
+
+        cell = %TorCell{
+          circ_id: circ_id,
+          cmd: :relay,
+          payload: %TorCell.Relay{onion_skin: onion_skin}
+        }
+
+        :ok = send_cell(cell, parent)
+
+        hop = List.last(state[:hops])
+        hop = %{kf: hop.kf, kb: hop.kb, df: df, db: hop.db}
+        state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
+
+        send(pid, {:send_relay_cell, :ok})
+
+        handler(circ_id, parent, state)
     end
   end
 
@@ -178,7 +243,7 @@ defmodule TorProto.Circuit.Initiator do
     end
 
     {hop, nil, nil} = ntor_handshake(create2, created2, router, parent)
-    state = %{hops: [hop]}
+    state = %{hops: [hop], streams: %{}}
 
     handler(circ_id, parent, state)
   end
