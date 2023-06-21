@@ -82,20 +82,25 @@ defmodule TorProto.Circuit.Initiator do
         handler(circ_id, parent, state)
 
       {:end, pid} ->
-        destroy = %TorCell{
-          circ_id: circ_id,
-          cmd: :destroy,
-          payload: %TorCell.Destroy{reason: :finished}
-        }
+        if map_size(state[:streams]) != 0 do
+          send(pid, {:end, :error})
+          handler(circ_id, parent, state)
+        else
+          destroy = %TorCell{
+            circ_id: circ_id,
+            cmd: :destroy,
+            payload: %TorCell.Destroy{reason: :finished}
+          }
 
-        :ok = send_cell(destroy, parent)
-        send(parent, {:end_circuit, circ_id, self()})
+          :ok = send_cell(destroy, parent)
+          send(parent, {:end_circuit, circ_id, self()})
 
-        receive do
-          {:end_circuit, :ok} -> nil
+          receive do
+            {:end_circuit, :ok} -> nil
+          end
+
+          send(pid, {:end, :ok})
         end
-
-        send(pid, {:end, :ok})
 
       {:end_stream, stream_id, pid} ->
         true = state[:streams][stream_id] == pid
