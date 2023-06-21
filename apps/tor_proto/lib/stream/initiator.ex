@@ -39,11 +39,29 @@ defmodule TorProto.Stream.Initiator do
 
   defp handler(stream_id, parent, receiver) do
     receive do
+      {:end, pid} ->
+        end_cell = %TorCell.RelayCell{
+          cmd: :end,
+          stream_id: stream_id,
+          data: %TorCell.RelayCell.End{reason: :done}
+        }
+
+        :ok = send_relay_cell(end_cell, parent)
+
+        send(parent, {:end_stream, stream_id, self()})
+
+        receive do
+          {:end_stream, :ok} -> nil
+        end
+
+        send(pid, {:end, :ok})
+
       {:recv_relay_cell, relay_cell} ->
         %TorCell.RelayCell{cmd: cmd, stream_id: ^stream_id, data: data} = relay_cell
 
         case cmd do
           :data -> send(receiver, {:recv_data, data.data})
+          :end -> send(self(), {:end, self()})
         end
 
         handler(stream_id, parent, receiver)

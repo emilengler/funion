@@ -81,6 +81,13 @@ defmodule TorProto.Circuit.Initiator do
         state = Map.replace!(state, :streams, Map.put(state[:streams], stream_id, stream))
         handler(circ_id, parent, state)
 
+      {:end_stream, stream_id, pid} ->
+        true = state[:streams][stream_id] == pid
+        send(pid, {:end_stream, :ok})
+
+        state = Map.replace!(state, :streams, Map.delete(state[:streams], stream_id))
+        handler(circ_id, parent, state)
+
       {:extend, router, pid} ->
         # Generate the specs field
         specs = [
