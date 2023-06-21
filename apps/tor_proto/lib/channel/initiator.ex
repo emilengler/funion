@@ -76,6 +76,13 @@ defmodule TorProto.Channel.Initiator do
         send(pid, {:create, circuit})
         handler(router, socket, state)
 
+      {:end_circuit, circ_id, pid} ->
+        true = state[:circ_ids][circ_id] == pid
+        send(pid, {:end_circuit, :ok})
+
+        state = Map.replace!(state, :circ_ids, Map.delete(state[:circ_ids], circ_id))
+        handler(router, socket, state)
+
       {:recv_cell, cell} ->
         if cell.circ_id == 0 do
           raise "TODO"

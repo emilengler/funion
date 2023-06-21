@@ -81,6 +81,22 @@ defmodule TorProto.Circuit.Initiator do
         state = Map.replace!(state, :streams, Map.put(state[:streams], stream_id, stream))
         handler(circ_id, parent, state)
 
+      {:end, pid} ->
+        destroy = %TorCell{
+          circ_id: circ_id,
+          cmd: :destroy,
+          payload: %TorCell.Destroy{reason: :finished}
+        }
+
+        :ok = send_cell(destroy, parent)
+        send(parent, {:end_circuit, circ_id, self()})
+
+        receive do
+          {:end_circuit, :ok} -> nil
+        end
+
+        send(pid, {:end, :ok})
+
       {:end_stream, stream_id, pid} ->
         true = state[:streams][stream_id] == pid
         send(pid, {:end_stream, :ok})
