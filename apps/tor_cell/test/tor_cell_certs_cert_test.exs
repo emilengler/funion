@@ -163,7 +163,7 @@ defmodule TorCellCertsCertTest do
         certified_key:
           <<21, 195, 194, 141, 132, 50, 207, 113, 139, 70, 72, 23, 89, 84, 174, 235, 255, 176, 47,
             135, 165, 114, 166, 20, 243, 149, 223, 81, 221, 149, 34, 121>>,
-        expiration_date: ~U[1970-01-06 09:49:56Z],
+        expiration_date: ~U[2023-04-27 20:00:00Z],
         extensions: [
           %TorCert.Ed25519.Extension{
             data:

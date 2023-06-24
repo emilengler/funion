@@ -20,6 +20,11 @@ defmodule TorCert.Ed25519 do
     end
   end
 
+  defp decode_expiration_date(expiration_date) do
+    expiration_date = expiration_date * 60 * 60
+    DateTime.from_unix!(expiration_date)
+  end
+
   defp decode_cert_key_type(cert_key_type) do
     case cert_key_type do
       0x01 -> :ed25519
@@ -33,6 +38,10 @@ defmodule TorCert.Ed25519 do
       :tls_ed25519_signing -> <<0x05>>
       :ed25519_auth_ed25519_signing -> <<0x06>>
     end
+  end
+
+  defp encode_expiration_date(expiration_date) do
+    <<div(div(DateTime.to_unix(expiration_date), 60), 60)::32>>
   end
 
   defp encode_cert_key_type(cert_key_type) do
@@ -75,7 +84,7 @@ defmodule TorCert.Ed25519 do
     {
       %TorCert.Ed25519{
         cert_type: decode_cert_type(cert_type),
-        expiration_date: DateTime.from_unix!(expiration_date),
+        expiration_date: decode_expiration_date(expiration_date),
         cert_key_type: decode_cert_key_type(cert_key_type),
         certified_key: certified_key,
         extensions: extensions,
@@ -93,7 +102,7 @@ defmodule TorCert.Ed25519 do
   def encode(cert) do
     <<1>> <>
       encode_cert_type(cert.cert_type) <>
-      <<DateTime.to_unix(cert.expiration_date)::32>> <>
+      encode_expiration_date(cert.expiration_date) <>
       encode_cert_key_type(cert.cert_key_type) <>
       <<cert.certified_key::binary-size(32)>> <>
       <<length(cert.extensions)>> <>
