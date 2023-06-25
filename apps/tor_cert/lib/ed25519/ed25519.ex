@@ -109,4 +109,20 @@ defmodule TorCert.Ed25519 do
       encode_extensions(cert.extensions) <>
       <<cert.signature::binary-size(64)>>
   end
+
+  @doc """
+  Validates if a certificate is properly signed.
+  """
+  def is_valid?(cert, key, time \\ DateTime.utc_now()) do
+    if DateTime.compare(time, cert.expiration_date) == :gt do
+      false
+    else
+      # Encode the certificate with the signature removed
+      encoded = encode(cert)
+      len = byte_size(encoded) - 64
+      <<encoded::binary-size(len), _::binary>> = encoded
+
+      :crypto.verify(:eddsa, :none, encoded, cert.signature, [key, :ed25519])
+    end
+  end
 end
