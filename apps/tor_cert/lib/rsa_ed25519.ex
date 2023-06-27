@@ -52,4 +52,24 @@ defmodule TorCert.RsaEd25519 do
       <<byte_size(cert.signature)>> <>
       cert.signature
   end
+
+  @doc """
+  Validates if a certificate is properly signed.
+  """
+  def is_valid?(cert, key, time \\ DateTime.utc_now()) do
+    {:RSAPublicKey, modulus, exponent} = key
+
+    if DateTime.compare(time, cert.expiration_date) == :gt do
+      false
+    else
+      encoded = TorCert.RsaEd25519.encode(cert)
+      <<encoded::binary-size(36), _::binary>> = encoded
+
+      state = :crypto.hash_init(:sha256)
+      state = :crypto.hash_update(state, "Tor TLS RSA/Ed25519 cross-certificate" <> encoded)
+      hash = :crypto.hash_final(state)
+
+      :crypto.verify(:rsa, :none, hash, cert.signature, [exponent, modulus])
+    end
+  end
 end
