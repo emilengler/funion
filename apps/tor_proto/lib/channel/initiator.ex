@@ -61,6 +61,30 @@ defmodule TorProto.Channel.Initiator do
     end
   end
 
+  defp is_valid_cert?(cert, keys) do
+    case cert.type do
+      :rsa_link -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
+      :rsa_id -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
+      :rsa_auth -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
+      :ed25519_id_signing -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_identity)
+      :ed25519_signing_link -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_signing)
+      :ed25519_signing_auth -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_signing)
+      :rsa_ed25519_cross_cert -> TorCert.RsaEd25519.is_valid?(cert.cert, keys.rsa_identity)
+    end
+  end
+
+  defp is_valid_certs?(certs, keys) when length(certs) > 0 do
+    if is_valid_cert?(hd(certs), keys) do
+      is_valid_certs?(tl(certs), keys)
+    else
+      false
+    end
+  end
+
+  defp is_valid_certs?(_, _) do
+    true
+  end
+
   defp handler(router, socket, state) do
     receive do
       {:create, pid} ->
@@ -117,8 +141,6 @@ defmodule TorProto.Channel.Initiator do
     parent = self()
     socket = spawn_link(fn -> TorProto.TlsSocket.Client.init(ip, router.orport, parent) end)
 
-    # TODO: Validate the cells
-
     :ok = send_cell(socket, gen_versions_cell())
 
     versions = recv_cell()
@@ -126,6 +148,7 @@ defmodule TorProto.Channel.Initiator do
 
     certs = recv_cell()
     %TorCell{circ_id: 0, cmd: :certs, payload: _} = certs
+    true = is_valid_certs?(certs.payload.certs, router.keys)
 
     auth_challenge = recv_cell()
     %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge
