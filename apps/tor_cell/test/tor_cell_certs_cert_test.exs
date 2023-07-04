@@ -36,7 +36,7 @@ defmodule TorCellCertsCertTest do
 
     {cert, payload} = TorCell.Certs.Cert.fetch(cert)
     assert cert.type == :rsa_id
-    assert cert.cert == :public_key.pkix_decode_cert(raw, :plain)
+    assert cert.cert == raw
 
     assert payload == <<42, 69>>
   end

@@ -18,9 +18,9 @@ defmodule TorCell.Certs.Cert do
 
   defp decode_cert(type, cert) do
     case type do
-      :rsa_link -> :public_key.pkix_decode_cert(cert, :plain)
-      :rsa_id -> :public_key.pkix_decode_cert(cert, :plain)
-      :rsa_auth -> :public_key.pkix_decode_cert(cert, :plain)
+      :rsa_link -> cert
+      :rsa_id -> cert
+      :rsa_auth -> cert
       :ed25519_id_signing -> decode_cert_tor_ed25519(cert)
       :ed25519_signing_link -> decode_cert_tor_ed25519(cert)
       :ed25519_signing_auth -> decode_cert_tor_ed25519(cert)
