@@ -21,3 +21,8 @@ Please report [**issues**](https://dev.emux.org/funion/ticket) there.
 *Fun* and *Onion* makes up *Funion*.
 *Functional* and *Onion* makes up *Funion*.
 Choose any three.
+
+## License
+
+All sources use the ISC license.
+See the [LICENSE](LICENSE) file for details.
