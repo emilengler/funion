@@ -68,6 +68,8 @@ defmodule TorProto.Stream.Initiator do
       stream_id: stream_id
     }
 
+    Logger.info("Initialized stream #{args}")
+
     {:ok, state}
   end
 
@@ -94,6 +96,8 @@ defmodule TorProto.Stream.Initiator do
       end)
 
     send_relay_cells(state[:circuit], cells)
+    Logger.debug("Sent " <> byte_size(data) <> " bytes of data")
+
     {:reply, :ok, state}
   end
 
@@ -108,6 +112,7 @@ defmodule TorProto.Stream.Initiator do
     send_relay_cell(state[:circuit], end_cell)
 
     :ok = GenServer.call(state[:circuit], :end_stream)
+    Logger.info("Terminated stream")
 
     :normal
   end
