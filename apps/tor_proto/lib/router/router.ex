@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: ISC
 
-defmodule TorDir.Router do
+defmodule TorProto.Router do
   defstruct nickname: nil,
             identity: nil,
             ip4: nil,

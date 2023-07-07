@@ -29,8 +29,7 @@ defmodule TorProto.MixProject do
   defp deps do
     [
       {:tor_cell, in_umbrella: true},
-      {:tor_crypto, in_umbrella: true},
-      {:tor_dir, in_umbrella: true}
+      {:tor_crypto, in_umbrella: true}
     ]
   end
 end

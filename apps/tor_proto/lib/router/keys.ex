@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: ISC
 
-defmodule TorDir.Router.Keys do
+defmodule TorProto.Router.Keys do
   defstruct rsa_identity: nil,
             rsa_onion: nil,
             rsa_connection: nil,
