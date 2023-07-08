@@ -5,6 +5,7 @@ defmodule TorProto.Stream.Initiator do
   Manages an initiator of a TCP stream of a circuit in the Tor protocol.
   """
   use GenServer
+  require Logger
 
   defp chunkify(data, n, chunks \\ []) do
     if byte_size(data) >= n do
