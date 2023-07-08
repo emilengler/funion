@@ -97,7 +97,7 @@ defmodule TorCert.Ed25519 do
   @doc """
   Encodes an Ed25519 certificate into a binary
 
-  Returns a binary corresponding to the certficiate.
+  Returns a binary corresponding to the certificate.
   """
   def encode(cert) do
     <<1>> <>
