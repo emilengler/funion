@@ -112,7 +112,7 @@ defmodule TorProto.Stream.Initiator do
 
     send_relay_cell(state[:circuit], end_cell)
 
-    :ok = GenServer.call(state[:circuit], {:end_stream, stream_id})
+    :ok = GenServer.call(state[:circuit], {:end_stream, state[:stream_id]})
     Logger.info("Terminated stream")
 
     :normal
