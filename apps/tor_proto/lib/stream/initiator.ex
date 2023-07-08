@@ -71,7 +71,7 @@ defmodule TorProto.Stream.Initiator do
 
     Logger.info("Initialized stream #{args}")
 
-    {:ok, state}
+    {:reply, :ok, state}
   end
 
   @impl true
