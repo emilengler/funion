@@ -11,9 +11,11 @@ defmodule TorCell do
 
   @type t :: %TorCell{circ_id: circ_id(), cmd: cmd(), payload: payload()}
   @type circ_id :: integer()
-  @type cmd :: :padding | :versions | :create2 | :created2 | :vpadding | :auth_challenge
+  @type cmd ::
+          :padding | :destroy | :versions | :create2 | :created2 | :vpadding | :auth_challenge
   @type payload ::
           TorCell.Padding
+          | TorCell.Destroy
           | TorCell.Versions
           | TorCell.Create2
           | TorCell.Created2
@@ -33,6 +35,7 @@ defmodule TorCell do
     cmd =
       case cmd do
         0 -> :padding
+        4 -> :destroy
         7 -> :versions
         10 -> :create2
         11 -> :created2
@@ -60,6 +63,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.decode(payload)
+        :destroy -> TorCell.Destroy.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
         :created2 -> TorCell.Created2.decode(payload)
@@ -79,6 +83,7 @@ defmodule TorCell do
   defp encode_cmd(cmd) do
     case cmd do
       :padding -> <<0>>
+      :destroy -> <<4>>
       :versions -> <<7>>
       :create2 -> <<10>>
       :created2 -> <<11>>
@@ -92,6 +97,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.encode(payload)
+        :destroy -> TorCell.Destroy.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :create2 -> TorCell.Create2.encode(payload)
         :created2 -> TorCell.Created2.encode(payload)
