@@ -11,8 +11,8 @@ defmodule TorCell do
 
   @type t :: %TorCell{circ_id: circ_id(), cmd: cmd(), payload: payload()}
   @type circ_id :: integer()
-  @type cmd :: :padding | :vpadding
-  @type payload :: TorCell.Padding | TorCell.Vpadding
+  @type cmd :: :padding | :versions | :vpadding
+  @type payload :: TorCell.Padding | TorCell.Versions | TorCell.Vpadding
 
   @spec fetch_circ_id(binary(), integer()) :: {circ_id(), binary()}
   defp fetch_circ_id(data, circ_id_len) do
@@ -27,6 +27,7 @@ defmodule TorCell do
     cmd =
       case cmd do
         0 -> :padding
+        7 -> :versions
         128 -> :vpadding
       end
 
@@ -50,6 +51,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.decode(payload)
+        :versions -> TorCell.Versions.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
       end
 
@@ -65,6 +67,7 @@ defmodule TorCell do
   defp encode_cmd(cmd) do
     case cmd do
       :padding -> <<0>>
+      :versions -> <<7>>
       :vpadding -> <<128>>
     end
   end
@@ -74,6 +77,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.encode(payload)
+        :versions -> TorCell.Versions.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
       end
 
@@ -90,7 +94,7 @@ defmodule TorCell do
 
   @spec is_vlen?(cmd()) :: boolean()
   defp is_vlen?(cmd) do
-    cmd in [:vpadding]
+    cmd in [:versions, :vpadding]
   end
 
   @doc """
