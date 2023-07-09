@@ -26,7 +26,7 @@ defmodule TorCell do
   end
 
   defp encode_circ_id_len(circ_id, circ_id_len) do
-    # Convet circ_id_len from bytes to bits
+    # Convert circ_id_len from bytes to bits
     circ_id_len = circ_id_len * 8
 
     <<circ_id::integer-size(circ_id_len)>>
