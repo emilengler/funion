@@ -9,11 +9,12 @@ defmodule TorCell do
             cmd: nil,
             payload: nil
 
-  @type t :: %TorCell{circ_id: integer(), cmd: cmd(), payload: payload()}
+  @type t :: %TorCell{circ_id: circ_id(), cmd: cmd(), payload: payload()}
+  @type circ_id :: integer()
   @type cmd :: :padding | :vpadding
   @type payload :: TorCell.Padding | TorCell.Vpadding
 
-  @spec fetch_circ_id(binary(), integer()) :: {integer(), binary()}
+  @spec fetch_circ_id(binary(), integer()) :: {circ_id(), binary()}
   defp fetch_circ_id(data, circ_id_len) do
     <<circ_id::integer-size(circ_id_len)-unit(8), remaining::binary>> = data
     {circ_id, remaining}
@@ -55,7 +56,7 @@ defmodule TorCell do
     {payload, remaining}
   end
 
-  @spec encode_circ_id(integer(), integer()) :: binary()
+  @spec encode_circ_id(circ_id(), integer()) :: binary()
   defp encode_circ_id(circ_id, circ_id_len) do
     <<circ_id::integer-size(circ_id_len)-unit(8)>>
   end
