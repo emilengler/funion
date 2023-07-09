@@ -28,7 +28,7 @@ defmodule TorCert.RsaEd25519 do
     <<ed25519_key::binary-size(32), data::binary>> = data
     <<expiration_date::32, data::binary>> = data
     expiration_date = decode_expiration_date(expiration_date)
-    <<siglen::8, data::binary>> = data
+    <<siglen, data::binary>> = data
     <<signature::binary-size(siglen), data::binary>> = data
 
     {

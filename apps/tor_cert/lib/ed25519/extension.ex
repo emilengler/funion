@@ -34,8 +34,8 @@ defmodule TorCert.Ed25519.Extension do
   """
   def fetch(data) do
     <<32::16, data::binary>> = data
-    <<0x04::8, data::binary>> = data
-    <<flags::8, data::binary>> = data
+    <<0x04, data::binary>> = data
+    <<flags, data::binary>> = data
     <<ext_data::binary-size(32), data::binary>> = data
 
     {

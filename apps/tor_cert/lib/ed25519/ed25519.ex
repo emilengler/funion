@@ -72,12 +72,12 @@ defmodule TorCert.Ed25519 do
   """
   def fetch(data) do
     # TODO: Consider fetching the version?
-    <<1::8, data::binary>> = data
-    <<cert_type::8, data::binary>> = data
+    <<1, data::binary>> = data
+    <<cert_type, data::binary>> = data
     <<expiration_date::32, data::binary>> = data
-    <<cert_key_type::8, data::binary>> = data
+    <<cert_key_type, data::binary>> = data
     <<certified_key::binary-size(32), data::binary>> = data
-    <<n_extensions::8, data::binary>> = data
+    <<n_extensions, data::binary>> = data
     {extensions, data} = fetch_extensions([], n_extensions, data)
     <<signature::binary-size(64), data::binary>> = data
 
