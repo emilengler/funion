@@ -11,8 +11,13 @@ defmodule TorCell do
 
   @type t :: %TorCell{circ_id: circ_id(), cmd: cmd(), payload: payload()}
   @type circ_id :: integer()
-  @type cmd :: :padding | :versions | :create2 | :vpadding
-  @type payload :: TorCell.Padding | TorCell.Versions | TorCell.Create2 | TorCell.Vpadding
+  @type cmd :: :padding | :versions | :create2 | :created2 | :vpadding
+  @type payload ::
+          TorCell.Padding
+          | TorCell.Versions
+          | TorCell.Create2
+          | TorCell.Created2
+          | TorCell.Vpadding
 
   @spec fetch_circ_id(binary(), integer()) :: {circ_id(), binary()}
   defp fetch_circ_id(data, circ_id_len) do
@@ -29,6 +34,7 @@ defmodule TorCell do
         0 -> :padding
         7 -> :versions
         10 -> :create2
+        11 -> :created2
         128 -> :vpadding
       end
 
@@ -54,6 +60,7 @@ defmodule TorCell do
         :padding -> TorCell.Padding.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
+        :created2 -> TorCell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
       end
 
@@ -71,6 +78,7 @@ defmodule TorCell do
       :padding -> <<0>>
       :versions -> <<7>>
       :create2 -> <<10>>
+      :created2 -> <<11>>
       :vpadding -> <<128>>
     end
   end
@@ -82,6 +90,7 @@ defmodule TorCell do
         :padding -> TorCell.Padding.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :create2 -> TorCell.Create2.encode(payload)
+        :created2 -> TorCell.Created2.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
       end
 
