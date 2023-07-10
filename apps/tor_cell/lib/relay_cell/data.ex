@@ -4,7 +4,7 @@ defmodule TorCell.RelayCell.Data do
   @enforce_keys [:data]
   defstruct data: nil
 
-  @type t :: %TorCell.RelayCell{data: binary()}
+  @type t :: %TorCell.RelayCell.Data{data: binary()}
 
   @spec decode(binary()) :: TorCell.RelayCell.Data
   def decode(data) do
