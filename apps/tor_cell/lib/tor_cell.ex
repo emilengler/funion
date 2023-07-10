@@ -22,6 +22,7 @@ defmodule TorCell do
           | :created2
           | :vpadding
           | :auth_challenge
+          | :authenticate
   @type payload ::
           TorCell.Padding
           | TorCell.Relay
@@ -33,6 +34,7 @@ defmodule TorCell do
           | TorCell.Created2
           | TorCell.Vpadding
           | TorCell.AuthChallenge
+          | TorCell.Authenticate
 
   @spec fetch_circ_id(binary(), integer()) :: {circ_id(), binary()}
   defp fetch_circ_id(data, circ_id_len) do
@@ -56,6 +58,7 @@ defmodule TorCell do
         11 -> :created2
         128 -> :vpadding
         130 -> :auth_challenge
+        131 -> :authenticate
       end
 
     {cmd, remaining}
@@ -87,6 +90,7 @@ defmodule TorCell do
         :created2 -> TorCell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
         :auth_challenge -> TorCell.AuthChallenge.decode(payload)
+        :authenticate -> TorCell.Authenticate.decode(payload)
       end
 
     {payload, remaining}
@@ -110,6 +114,7 @@ defmodule TorCell do
       :created2 -> <<11>>
       :vpadding -> <<128>>
       :auth_challenge -> <<130>>
+      :authenticate -> <<131>>
     end
   end
 
@@ -127,6 +132,7 @@ defmodule TorCell do
         :created2 -> TorCell.Created2.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
         :auth_challenge -> TorCell.AuthChallenge.encode(payload)
+        :authenticate -> TorCell.Authenticate.encode(payload)
       end
 
     # Some final adjustments
@@ -142,7 +148,7 @@ defmodule TorCell do
 
   @spec is_vlen?(cmd()) :: boolean()
   defp is_vlen?(cmd) do
-    cmd in [:versions, :vpadding, :auth_challenge]
+    cmd in [:versions, :vpadding, :auth_challenge, :authenticate]
   end
 
   @doc """
