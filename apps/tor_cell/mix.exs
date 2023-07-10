@@ -25,6 +25,8 @@ defmodule TorCell.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    []
+    [
+      {:tor_crypto, in_umbrella: true}
+    ]
   end
 end
