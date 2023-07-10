@@ -13,6 +13,7 @@ defmodule TorCell do
   @type circ_id :: integer()
   @type cmd ::
           :padding
+          | :relay
           | :destroy
           | :versions
           | :netinfo
@@ -22,9 +23,10 @@ defmodule TorCell do
           | :auth_challenge
   @type payload ::
           TorCell.Padding
+          | TorCell.Relay
           | TorCell.Destroy
           | TorCell.Versions
-          | :netinfo
+          | TorCell.Netinfo
           | TorCell.Create2
           | TorCell.Created2
           | TorCell.Vpadding
@@ -43,6 +45,7 @@ defmodule TorCell do
     cmd =
       case cmd do
         0 -> :padding
+        3 -> :relay
         4 -> :destroy
         7 -> :versions
         8 -> :netinfo
@@ -72,6 +75,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.decode(payload)
+        :relay -> TorCell.Relay.decode(payload)
         :destroy -> TorCell.Destroy.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
@@ -93,6 +97,7 @@ defmodule TorCell do
   defp encode_cmd(cmd) do
     case cmd do
       :padding -> <<0>>
+      :relay -> <<3>>
       :destroy -> <<4>>
       :versions -> <<7>>
       :netinfo -> <<8>>
@@ -108,6 +113,7 @@ defmodule TorCell do
     payload =
       case cmd do
         :padding -> TorCell.Padding.encode(payload)
+        :relay -> TorCell.Relay.encode(payload)
         :destroy -> TorCell.Destroy.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :netinfo -> TorCell.Netinfo.encode(payload)
