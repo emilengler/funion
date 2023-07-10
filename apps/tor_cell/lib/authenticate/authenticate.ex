@@ -27,6 +27,6 @@ defmodule TorCell.Authenticate do
     :ed25519_sha256_rfc5705 = cell.auth_type
     authentication = TorCell.Authenticate.Ed25519Sha256Rfc5705.encode(cell.authentication)
 
-    <<3::16, byte_size(authentication)::16, authentication>>
+    <<3::16, byte_size(authentication)::16>> <> authentication
   end
 end
