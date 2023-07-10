@@ -17,6 +17,7 @@ defmodule TorCell do
           | :destroy
           | :versions
           | :netinfo
+          | :relay_early
           | :create2
           | :created2
           | :vpadding
@@ -27,6 +28,7 @@ defmodule TorCell do
           | TorCell.Destroy
           | TorCell.Versions
           | TorCell.Netinfo
+          | TorCell.RelayEarly
           | TorCell.Create2
           | TorCell.Created2
           | TorCell.Vpadding
@@ -49,6 +51,7 @@ defmodule TorCell do
         4 -> :destroy
         7 -> :versions
         8 -> :netinfo
+        9 -> :relay_early
         10 -> :create2
         11 -> :created2
         128 -> :vpadding
@@ -79,6 +82,7 @@ defmodule TorCell do
         :destroy -> TorCell.Destroy.decode(payload)
         :versions -> TorCell.Versions.decode(payload)
         :netinfo -> TorCell.Netinfo.decode(payload)
+        :relay_early -> TorCell.RelayEarly.decode(payload)
         :create2 -> TorCell.Create2.decode(payload)
         :created2 -> TorCell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
@@ -101,6 +105,7 @@ defmodule TorCell do
       :destroy -> <<4>>
       :versions -> <<7>>
       :netinfo -> <<8>>
+      :relay_early -> <<9>>
       :create2 -> <<10>>
       :created2 -> <<11>>
       :vpadding -> <<128>>
@@ -117,6 +122,7 @@ defmodule TorCell do
         :destroy -> TorCell.Destroy.encode(payload)
         :versions -> TorCell.Versions.encode(payload)
         :netinfo -> TorCell.Netinfo.encode(payload)
+        :relay_early -> TorCell.RelayEarly.encode(payload)
         :create2 -> TorCell.Create2.encode(payload)
         :created2 -> TorCell.Created2.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
