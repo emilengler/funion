@@ -7,9 +7,9 @@ defmodule TorCell.RelayCell do
             data: nil
 
   @type t :: %TorCell.RelayCell{cmd: cmd(), stream_id: stream_id(), data: data()}
-  @type cmd :: :data
+  @type cmd :: :begin | :data
   @type stream_id :: integer()
-  @type data :: TorCell.RelayCell.Data
+  @type data :: TorCell.RelayCell.Begin | TorCell.RelayCell.Data
 
   # TODO: Move those into TorCrypto
   @type onion_skin :: binary()
@@ -26,6 +26,7 @@ defmodule TorCell.RelayCell do
   @spec decode_cmd(integer()) :: cmd()
   defp decode_cmd(cmd) do
     case cmd do
+      1 -> :begin
       2 -> :data
     end
   end
@@ -33,6 +34,7 @@ defmodule TorCell.RelayCell do
   @spec decode_data(cmd(), binary()) :: data()
   defp decode_data(cmd, data) do
     case cmd do
+      :begin -> TorCell.RelayCell.Begin.decode(data)
       :data -> TorCell.RelayCell.Data.decode(data)
     end
   end
@@ -40,6 +42,7 @@ defmodule TorCell.RelayCell do
   @spec encode_cmd(cmd()) :: binary()
   defp encode_cmd(cmd) do
     case cmd do
+      :begin -> <<1>>
       :data -> <<2>>
     end
   end
@@ -47,6 +50,7 @@ defmodule TorCell.RelayCell do
   @spec encode_data(cmd(), data()) :: binary()
   defp encode_data(cmd, data) do
     case cmd do
+      :begin -> TorCell.RelayCell.Data.encode(data)
       :data -> TorCell.RelayCell.Data.encode(data)
     end
   end
