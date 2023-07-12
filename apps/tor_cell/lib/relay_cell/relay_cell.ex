@@ -7,13 +7,14 @@ defmodule TorCell.RelayCell do
             data: nil
 
   @type t :: %TorCell.RelayCell{cmd: cmd(), stream_id: stream_id(), data: data()}
-  @type cmd :: :begin | :data | :end | :connected | :extended2
+  @type cmd :: :begin | :data | :end | :connected | :extend2 | :extended2
   @type stream_id :: integer()
   @type data ::
           TorCell.RelayCell.Begin
           | TorCell.RelayCell.Data
           | TorCell.RelayCell.End
           | TorCell.RelayCell.Connected
+          | TorCell.RelayCell.Extend2
           | TorCell.RelayCell.Extended2
 
   # TODO: Move those into TorCrypto
@@ -35,6 +36,7 @@ defmodule TorCell.RelayCell do
       2 -> :data
       3 -> :end
       4 -> :connected
+      14 -> :extend2
       15 -> :extended2
     end
   end
@@ -46,6 +48,7 @@ defmodule TorCell.RelayCell do
       :data -> TorCell.RelayCell.Data.decode(data)
       :end -> TorCell.RelayCell.End.decode(data)
       :connected -> TorCell.RelayCell.Connected.decode(data)
+      :extend2 -> TorCell.RelayCell.Extend2.decode(data)
       :extended2 -> TorCell.RelayCell.Extended2.decode(data)
     end
   end
@@ -57,6 +60,7 @@ defmodule TorCell.RelayCell do
       :data -> <<2>>
       :end -> <<3>>
       :connected -> <<4>>
+      :extend2 -> <<14>>
       :extended2 -> <<15>>
     end
   end
@@ -68,6 +72,7 @@ defmodule TorCell.RelayCell do
       :data -> TorCell.RelayCell.Data.encode(data)
       :end -> TorCell.RelayCell.End.encode(data)
       :connected -> TorCell.RelayCell.Connected.encode(data)
+      :extend2 -> TorCell.RelayCell.Extend2.encode(data)
       :extended2 -> TorCell.RelayCell.Extended2.encode(data)
     end
   end
