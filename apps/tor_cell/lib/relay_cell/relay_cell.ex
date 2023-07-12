@@ -22,11 +22,16 @@ defmodule TorCell.RelayCell do
   @type keys :: [:crypto.crypto_state()]
   @type context :: :crypto.hash_state()
 
-  @spec zeroize_digest(binary()) :: binary()
-  defp zeroize_digest(digest) do
-    <<prefix::binary-size(5), suffix::binary>> = digest
+  @spec modify_digest(binary(), binary()) :: binary()
+  defp modify_digest(data, digest) do
+    <<prefix::binary-size(5), suffix::binary>> = data
     <<_::binary-size(4), suffix::binary>> = suffix
-    prefix <> <<0::32>> <> suffix
+    prefix <> digest <> suffix
+  end
+
+  @spec zeroize_digest(binary()) :: binary()
+  defp zeroize_digest(data) do
+    modify_digest(data, <<0::32>>)
   end
 
   @spec decode_cmd(integer()) :: cmd()
@@ -115,7 +120,7 @@ defmodule TorCell.RelayCell do
         encoded_data <> <<0::integer-size(padding_len)-unit(8)>>
 
     context = TorCrypto.Digest.update(context, encoded)
-    encoded = zeroize_digest(encoded)
+    encoded = modify_digest(encoded, <<TorCrypto.Digest.calculate(context)::binary-size(4)>>)
 
     {encoded, context}
   end
