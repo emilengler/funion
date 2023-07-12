@@ -21,6 +21,7 @@ defmodule TorCell do
           | :create2
           | :created2
           | :vpadding
+          | :certs
           | :auth_challenge
           | :authenticate
   @type payload ::
@@ -33,6 +34,7 @@ defmodule TorCell do
           | TorCell.Create2
           | TorCell.Created2
           | TorCell.Vpadding
+          | TorCell.Certs
           | TorCell.AuthChallenge
           | TorCell.Authenticate
 
@@ -57,6 +59,7 @@ defmodule TorCell do
         10 -> :create2
         11 -> :created2
         128 -> :vpadding
+        129 -> :certs
         130 -> :auth_challenge
         131 -> :authenticate
       end
@@ -89,6 +92,7 @@ defmodule TorCell do
         :create2 -> TorCell.Create2.decode(payload)
         :created2 -> TorCell.Created2.decode(payload)
         :vpadding -> TorCell.Vpadding.decode(payload)
+        :certs -> TorCell.Certs.decode(payload)
         :auth_challenge -> TorCell.AuthChallenge.decode(payload)
         :authenticate -> TorCell.Authenticate.decode(payload)
       end
@@ -113,6 +117,7 @@ defmodule TorCell do
       :create2 -> <<10>>
       :created2 -> <<11>>
       :vpadding -> <<128>>
+      :certs -> <<129>>
       :auth_challenge -> <<130>>
       :authenticate -> <<131>>
     end
@@ -131,6 +136,7 @@ defmodule TorCell do
         :create2 -> TorCell.Create2.encode(payload)
         :created2 -> TorCell.Created2.encode(payload)
         :vpadding -> TorCell.Vpadding.encode(payload)
+        :certs -> TorCell.Certs.encode(payload)
         :auth_challenge -> TorCell.AuthChallenge.encode(payload)
         :authenticate -> TorCell.Authenticate.encode(payload)
       end
@@ -148,7 +154,7 @@ defmodule TorCell do
 
   @spec is_vlen?(cmd()) :: boolean()
   defp is_vlen?(cmd) do
-    cmd in [:versions, :vpadding, :auth_challenge, :authenticate]
+    cmd in [:versions, :vpadding, :certs, :auth_challenge, :authenticate]
   end
 
   @doc """

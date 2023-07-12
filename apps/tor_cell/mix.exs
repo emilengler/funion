@@ -19,13 +19,14 @@ defmodule TorCell.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :crypto]
+      extra_applications: [:logger, :crypto, :public_key]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:tor_cert, in_umbrella: true},
       {:tor_crypto, in_umbrella: true}
     ]
   end
