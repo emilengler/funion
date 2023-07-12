@@ -60,7 +60,7 @@ defmodule TorCell.RelayCell do
   @spec encode_data(cmd(), data()) :: binary()
   defp encode_data(cmd, data) do
     case cmd do
-      :begin -> TorCell.RelayCell.Data.encode(data)
+      :begin -> TorCell.RelayCell.Begin.encode(data)
       :data -> TorCell.RelayCell.Data.encode(data)
       :end -> TorCell.RelayCell.End.encode(data)
       :connected -> TorCell.RelayCell.Connected.encode(data)
