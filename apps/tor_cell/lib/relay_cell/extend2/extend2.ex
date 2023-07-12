@@ -1,36 +1,44 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.RelayCell.Extend2 do
+  @enforce_keys [:specs, :htype, :hdata]
   defstruct specs: nil,
-            type: nil,
-            data: nil
+            htype: nil,
+            hdata: nil
 
-  defp fetch_specs(specs, n, payload) when n > 0 do
-    {spec, payload} = TorCell.RelayCell.Extend2.Spec.fetch(payload)
-    fetch_specs(specs ++ [spec], n - 1, payload)
+  @type t :: %TorCell.RelayCell.Extend2{specs: specs(), htype: htype(), hdata: binary()}
+  @type specs :: list(spec())
+  @type spec :: TorCell.RelayCell.Extend2.Spec
+
+  @type htype :: :ntor
+
+  @spec fetch_specs(binary(), integer(), specs()) :: {specs(), binary()}
+  defp fetch_specs(data, n, specs) when n > 0 do
+    {spec, remaining} = TorCell.RelayCell.Extend2.Spec.fetch(data)
+    fetch_specs(remaining, n - 1, specs ++ [spec])
   end
 
-  defp fetch_specs(specs, _, payload) do
-    {specs, payload}
+  @spec fetch_specs(binary(), integer(), specs()) :: {specs(), binary()}
+  defp fetch_specs(remaining, _, specs) do
+    {specs, remaining}
   end
 
-  # TODO: Document this
-  def decode(payload) do
-    <<nspec, payload::binary>> = payload
-    {specs, payload} = fetch_specs([], nspec, payload)
-    <<0x02::16, payload::binary>> = payload
-    <<len::16, payload::binary>> = payload
-    <<data::binary-size(len), _::binary>> = payload
+  @spec decode(binary()) :: TorCell.RelayCell.Extend2
+  def decode(data) do
+    remaining = data
+    <<nspec, remaining::binary>> = remaining
+    {specs, remaining} = fetch_specs(remaining, nspec, [])
+    <<0x02::16, remaining::binary>> = remaining
+    <<hlen::16, remaining::binary>> = remaining
+    <<hdata::binary-size(hlen), _::binary>> = remaining
 
-    %TorCell.RelayCell.Extend2{specs: specs, type: :ntor, data: data}
+    %TorCell.RelayCell.Extend2{specs: specs, htype: :ntor, hdata: hdata}
   end
 
-  # TODO: Encode this
+  @spec encode(TorCell.RelayCell.Extend2) :: binary()
   def encode(cell) do
     <<length(cell.specs)>> <>
       Enum.join(Enum.map(cell.specs, fn x -> TorCell.RelayCell.Extend2.Spec.encode(x) end)) <>
-      <<0x02::16>> <>
-      <<byte_size(cell.data)::16>> <>
-      cell.data
+      <<0x02::16, byte_size(cell.hdata)::16>> <> cell.hdata
   end
 end

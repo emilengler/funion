@@ -1,28 +1,22 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Created2 do
-  defstruct data: nil
+  @enforce_keys [:hdata]
+  defstruct hdata: nil
 
-  @doc """
-  Decodes the payload of a CREATED2 TorCell into its internal representation.
+  @type t :: %TorCell.Created2{hdata: binary()}
 
-  Returns a TorCell.Created2 with type and data set accordingly.
-  """
+  @spec decode(binary()) :: TorCell.Created2
   def decode(payload) do
-    <<len::16, payload::binary>> = payload
-    <<data::binary-size(len), _::binary>> = payload
+    remaining = payload
+    <<hlen::16, remaining::binary>> = remaining
+    <<hdata::binary-size(hlen), _::binary>> = remaining
 
-    %TorCell.Created2{
-      data: data
-    }
+    %TorCell.Created2{hdata: hdata}
   end
 
-  @doc """
-  Encodes a TorCell.Created2 into a binary.
-
-  Returns a binary corresponding to the payload of a CREATED2 TorCell.
-  """
+  @spec encode(TorCell.Created2) :: binary()
   def encode(cell) do
-    <<byte_size(cell.data)::16>> <> cell.data
+    <<byte_size(cell.hdata)::16>> <> cell.hdata
   end
 end

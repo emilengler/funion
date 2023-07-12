@@ -1,34 +1,18 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Relay do
-  @moduledoc """
-  Implements an **encrypted** RELAY TorCell.
-
-  This is more of an intermediate representation between TorCell and
-  TorCell.RelayCell.
-  """
+  @enforce_keys [:onion_skin]
   defstruct onion_skin: nil
 
-  @doc """
-  Decodes the payload of a RELAY TorCell into its internal representation.
-  This function does not perform any sort of decryption.
+  @type t :: %TorCell.Relay{onion_skin: binary()}
 
-  Returns a TorCell.Relay with the onion_skin field being identical to the
-  original payload of the TorCell.
-  """
+  @spec decode(binary()) :: TorCell.Relay
   def decode(payload) do
-    <<payload::binary-size(509)>> = payload
-
-    %TorCell.Relay{
-      onion_skin: payload
-    }
+    <<onion_skin::binary-size(509)>> = payload
+    %TorCell.Relay{onion_skin: onion_skin}
   end
 
-  @doc """
-  Encodes a TorCell.Relay into a binary, without performing any sort encryption.
-
-  Returns a binary corresponding to the payload of a RELAY TorCell.
-  """
+  @spec encode(TorCell.Relay) :: binary()
   def encode(cell) do
     <<cell.onion_skin::binary-size(509)>>
   end

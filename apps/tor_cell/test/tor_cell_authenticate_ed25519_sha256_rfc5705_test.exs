@@ -4,7 +4,7 @@ defmodule TorCellAuthenticateEd25519Sha256Rfc5705Test do
   use ExUnit.Case
   doctest TorCell.Authenticate.Ed25519Sha256Rfc5705
 
-  test "decodes a TorCell.Authenticate.Ed25519Sha256Rfc5705" do
+  test "decodes a TorCell.Authenticate.Ed25519Sha256Rfc5705 authentication" do
     payload =
       "AUTH0003" <>
         <<0::8*32>> <>
@@ -33,7 +33,7 @@ defmodule TorCellAuthenticateEd25519Sha256Rfc5705Test do
              }
   end
 
-  test "encodes a TorCell.Authenticate.Ed25519Sha256Rfc5705" do
+  test "encodes a TorCell.Authenticate.Ed25519Sha256Rfc5705 authentication" do
     auth = %TorCell.Authenticate.Ed25519Sha256Rfc5705{
       cid: <<0::8*32>>,
       sid: <<1::8*32>>,

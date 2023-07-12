@@ -6,7 +6,7 @@ defmodule TorCellCertsCertTest do
 
   # The certificates in use were generously taken from my own Tor relay. :^)
 
-  test "fetches an X509 cert" do
+  test "fetches an X509 TorCell.Certs.Cert" do
     raw =
       <<48, 130, 1, 202, 48, 130, 1, 51, 160, 3, 2, 1, 2, 2, 9, 0, 243, 46, 103, 60, 91, 234, 164,
         112, 48, 13, 6, 9, 42, 134, 72, 134, 247, 13, 1, 1, 11, 5, 0, 48, 39, 49, 37, 48, 35, 6,
@@ -34,14 +34,13 @@ defmodule TorCellCertsCertTest do
 
     cert = <<2>> <> <<byte_size(raw)::16>> <> raw <> <<42, 69>>
 
-    {cert, payload} = TorCell.Certs.Cert.fetch(cert)
-    assert cert.type == :rsa_id
-    assert cert.cert == raw
+    {cert, remaining} = TorCell.Certs.Cert.fetch(cert)
 
-    assert payload == <<42, 69>>
+    assert cert == %TorCell.Certs.Cert{cert_type: :rsa_id, certificate: raw}
+    assert remaining == <<42, 69>>
   end
 
-  test "fetches an Ed25519 cert" do
+  test "fetches an Ed25519 TorCell.Certs.Cert" do
     raw =
       <<1, 4, 0, 7, 33, 196, 1, 21, 195, 194, 141, 132, 50, 207, 113, 139, 70, 72, 23, 89, 84,
         174, 235, 255, 176, 47, 135, 165, 114, 166, 20, 243, 149, 223, 81, 221, 149, 34, 121, 1,
@@ -56,14 +55,13 @@ defmodule TorCellCertsCertTest do
 
     cert = <<4>> <> <<byte_size(raw)::16>> <> raw <> <<42, 69>>
 
-    {cert, payload} = TorCell.Certs.Cert.fetch(cert)
-    assert cert.type == :ed25519_id_signing
-    assert cert.cert == raw_decoded
+    {cert, remaining} = TorCell.Certs.Cert.fetch(cert)
 
-    assert payload == <<42, 69>>
+    assert cert == %TorCell.Certs.Cert{cert_type: :ed25519_id_signing, certificate: raw_decoded}
+    assert remaining == <<42, 69>>
   end
 
-  test "fetches an RsaEd25519 cert" do
+  test "fetches an RsaEd25519 TorCell.Certs.Cert" do
     raw =
       <<194, 4, 162, 205, 242, 49, 217, 184, 187, 127, 147, 15, 211, 173, 83, 179, 26, 111, 116,
         63, 71, 28, 173, 15, 33, 128, 137, 199, 170, 24, 162, 214, 0, 7, 48, 155, 128, 9, 96, 80,
@@ -79,16 +77,19 @@ defmodule TorCellCertsCertTest do
 
     cert = <<7>> <> <<byte_size(raw)::16>> <> raw <> <<42, 69>>
 
-    {cert, payload} = TorCell.Certs.Cert.fetch(cert)
-    assert cert.type == :rsa_ed25519_cross_cert
-    assert cert.cert == raw_decoded
+    {cert, remaining} = TorCell.Certs.Cert.fetch(cert)
 
-    assert payload == <<42, 69>>
+    assert cert == %TorCell.Certs.Cert{
+             cert_type: :rsa_ed25519_cross_cert,
+             certificate: raw_decoded
+           }
+
+    assert remaining == <<42, 69>>
   end
 
-  test "encodes an X509 cert" do
+  test "encodes an X509 TorCell.Certs.Cert" do
     cert = %TorCell.Certs.Cert{
-      cert:
+      certificate:
         {:Certificate,
          {:TBSCertificate, :v3, 6_870_588_164_991_805_121,
           {:AlgorithmIdentifier, {1, 2, 840, 113_549, 1, 1, 11}, <<5, 0>>},
@@ -125,7 +126,7 @@ defmodule TorCellCertsCertTest do
            10, 190, 57, 201, 69, 125, 226, 50, 205, 26, 109, 213, 221, 34, 85, 240, 211, 83, 178,
            112, 134, 62, 122, 122, 14, 215, 206, 139, 214, 164, 212, 247, 3, 215, 3, 218, 247,
            125, 13, 253, 116, 24, 78, 139, 246, 202, 178, 247, 247, 53, 70, 86>>},
-      type: :rsa_id
+      cert_type: :rsa_id
     }
 
     raw =
@@ -155,9 +156,9 @@ defmodule TorCellCertsCertTest do
     assert TorCell.Certs.Cert.encode(cert) == <<2>> <> <<byte_size(raw)::16>> <> raw
   end
 
-  test "encodes an Ed25519 cert" do
+  test "encodes an Ed25519 TorCell.Certs.Cert" do
     cert = %TorCell.Certs.Cert{
-      cert: %TorCert.Ed25519{
+      certificate: %TorCert.Ed25519{
         cert_key_type: :ed25519,
         cert_type: :ed25519_signing_id,
         certified_key:
@@ -179,7 +180,7 @@ defmodule TorCellCertsCertTest do
             103, 40, 144, 114, 231, 206, 29, 192, 53, 144, 214, 70, 133, 170, 155, 176, 21, 31,
             30, 86, 51, 140, 142, 132, 60, 4>>
       },
-      type: :ed25519_id_signing
+      cert_type: :ed25519_id_signing
     }
 
     raw =
@@ -195,9 +196,9 @@ defmodule TorCellCertsCertTest do
     assert TorCell.Certs.Cert.encode(cert) == <<4>> <> <<byte_size(raw)::16>> <> raw
   end
 
-  test "encodes an RsaEd25519 cert" do
+  test "encodes an RsaEd25519 TorCell.Certs.Cert" do
     cert = %TorCell.Certs.Cert{
-      cert: %TorCert.RsaEd25519{
+      certificate: %TorCert.RsaEd25519{
         ed25519_key:
           <<194, 4, 162, 205, 242, 49, 217, 184, 187, 127, 147, 15, 211, 173, 83, 179, 26, 111,
             116, 63, 71, 28, 173, 15, 33, 128, 137, 199, 170, 24, 162, 214>>,
@@ -211,7 +212,7 @@ defmodule TorCellCertsCertTest do
             18, 105, 223, 96, 146, 100, 158, 105, 166, 201, 205, 171, 162, 65, 239, 147, 163, 206,
             142, 36, 145, 176, 227, 90, 225, 41, 156, 193, 33, 126, 21, 94, 131, 152, 8>>
       },
-      type: :rsa_ed25519_cross_cert
+      cert_type: :rsa_ed25519_cross_cert
     }
 
     raw =

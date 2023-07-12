@@ -113,19 +113,19 @@ defmodule TorProto.Circuit.Initiator do
         # Generate the specs field
         specs = [
           %TorCell.RelayCell.Extend2.Spec{
-            type: :tls_over_tcp4,
-            spec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp4{
+            lstype: :tls_over_tcp4,
+            lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp4{
               ip: router.ip4,
               port: router.orport
             }
           },
           %TorCell.RelayCell.Extend2.Spec{
-            type: :legacy_identity,
-            spec: %TorCell.RelayCell.Extend2.Spec.LegacyIdentity{fingerprint: router.identity}
+            lstype: :legacy_identity,
+            lspec: %TorCell.RelayCell.Extend2.Spec.LegacyIdentity{fingerprint: router.identity}
           },
           %TorCell.RelayCell.Extend2.Spec{
-            type: :ed25519_identity,
-            spec: %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{
+            lstype: :ed25519_identity,
+            lspec: %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{
               fingerprint: router.keys.ed25519_identity
             }
           }
@@ -139,8 +139,8 @@ defmodule TorProto.Circuit.Initiator do
             specs ++
               [
                 %TorCell.RelayCell.Extend2.Spec{
-                  type: :tls_over_tcp6,
-                  spec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{
+                  lstype: :tls_over_tcp6,
+                  lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{
                     ip: router.ip6,
                     port: router.orport
                   }
@@ -152,12 +152,12 @@ defmodule TorProto.Circuit.Initiator do
           cell = %TorCell.RelayCell{
             cmd: :extend2,
             stream_id: 0,
-            data: %TorCell.RelayCell.Extend2{specs: specs, type: :ntor, data: data}
+            data: %TorCell.RelayCell.Extend2{specs: specs, htype: :ntor, hdata: data}
           }
 
           df = List.last(state[:hops]).df
           kfs = Enum.map(state[:hops], fn x -> x.kf end)
-          {onion_skin, df} = TorCell.RelayCell.encrypt(kfs, df, cell)
+          {onion_skin, df} = TorCell.RelayCell.encrypt(cell, kfs, df)
 
           {
             %TorCell{
@@ -178,12 +178,12 @@ defmodule TorProto.Circuit.Initiator do
 
           db = List.last(state[:hops]).db
           kbs = Enum.map(state[:hops], fn x -> x.kb end)
-          {true, cell, db} = TorCell.RelayCell.decrypt(kbs, db, onion_skin)
+          {true, cell, db} = TorCell.RelayCell.decrypt(onion_skin, kbs, db)
 
           %TorCell.RelayCell{
             cmd: :extended2,
             stream_id: 0,
-            data: %TorCell.RelayCell.Extended2{data: data}
+            data: %TorCell.RelayCell.Extended2{hdata: data}
           } = cell
 
           {data, db}
@@ -208,7 +208,7 @@ defmodule TorProto.Circuit.Initiator do
             :relay ->
               kbs = Enum.map(state[:hops], fn x -> x.kb end)
               db = List.last(state[:hops]).db
-              {true, relay_cell, db} = TorCell.RelayCell.decrypt(kbs, db, payload.onion_skin)
+              {true, relay_cell, db} = TorCell.RelayCell.decrypt(payload.onion_skin, kbs, db)
 
               send(
                 Map.fetch!(state[:streams], relay_cell.stream_id),
@@ -225,7 +225,7 @@ defmodule TorProto.Circuit.Initiator do
       {:send_relay_cell, relay_cell, pid} ->
         kfs = Enum.map(state[:hops], fn x -> x.kf end)
         df = List.last(state[:hops]).df
-        {onion_skin, df} = TorCell.RelayCell.encrypt(kfs, df, relay_cell)
+        {onion_skin, df} = TorCell.RelayCell.encrypt(relay_cell, kfs, df)
 
         cell = %TorCell{
           circ_id: circ_id,
@@ -259,14 +259,14 @@ defmodule TorProto.Circuit.Initiator do
         %TorCell{
           circ_id: circ_id,
           cmd: :create2,
-          payload: %TorCell.Create2{type: :ntor, data: data}
+          payload: %TorCell.Create2{htype: :ntor, hdata: data}
         },
         nil
       }
     end
 
     created2 = fn cell ->
-      %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{data: data}} = cell
+      %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{hdata: data}} = cell
       {data, nil}
     end
 

@@ -1,24 +1,17 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Vpadding do
+  @enforce_keys [:padding]
   defstruct padding: nil
 
-  @doc """
-  Decodes the payload of a VPADDING TorCell into its internal representation.
+  @type t :: %TorCell.Vpadding{padding: binary()}
 
-  Returns a TorCell.Vpadding with padding set to the padding bytes.
-  """
+  @spec decode(binary()) :: TorCell.Vpadding
   def decode(payload) do
-    %TorCell.Vpadding{
-      padding: payload
-    }
+    %TorCell.Vpadding{padding: payload}
   end
 
-  @doc """
-  Encodes a TorCell.Vpadding into a binary.
-
-  Returns a binary corresponding to the payload of a VPADDING TorCell.
-  """
+  @spec encode(TorCell.Vpadding) :: binary()
   def encode(cell) do
     cell.padding
   end

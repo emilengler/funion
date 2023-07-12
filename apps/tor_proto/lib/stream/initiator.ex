@@ -94,12 +94,7 @@ defmodule TorProto.Stream.Initiator do
       stream_id: stream_id,
       data: %TorCell.RelayCell.Begin{
         host: host,
-        port: port,
-        flags: %{
-          ipv6_okay: true,
-          ipv4_not_okay: false,
-          ipv6_preferred: true
-        }
+        port: port
       }
     }
 

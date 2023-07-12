@@ -4,6 +4,18 @@ defmodule TorCertRsaEd25519Test do
   use ExUnit.Case
   doctest TorCert.RsaEd25519
 
+  test "decodes a TorCert.RsaEd25519" do
+    data = <<0::8*32, 0::32, 32, 0::8*32>>
+
+    cert = TorCert.RsaEd25519.decode(data)
+
+    assert cert == %TorCert.RsaEd25519{
+             ed25519_key: <<0::32*8>>,
+             expiration_date: DateTime.from_unix!(0),
+             signature: <<0::32*8>>
+           }
+  end
+
   test "fetches a TorCert.RsaEd25519" do
     data =
       <<0::8*32>> <>

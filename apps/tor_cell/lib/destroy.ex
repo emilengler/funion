@@ -1,42 +1,50 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Destroy do
+  @enforce_keys [:reason]
   defstruct reason: nil
 
-  @doc """
-  Decodes the payload of a DESTROY TorCell into its internal representation.
+  @type t :: %TorCell.Destroy{reason: reason()}
+  @type reason ::
+          :none
+          | :protocol
+          | :internal
+          | :requested
+          | :hibernating
+          | :resourcelimit
+          | :connectfailed
+          | :or_identity
+          | :channel_closed
+          | :finished
+          | :timeout
+          | :destroyed
 
-  Returns a TorCell.Destroy with reason set to the error code as an atom.
-  """
+  @spec decode(binary()) :: TorCell.Destroy
   def decode(payload) do
-    <<error, _::binary-size(508)>> = payload
+    <<reason, _::binary-size(508)>> = payload
 
-    %TorCell.Destroy{
-      reason:
-        case error do
-          0 -> :none
-          1 -> :protocol
-          2 -> :internal
-          3 -> :requested
-          4 -> :hibernating
-          5 -> :resourcelimit
-          6 -> :connectfailed
-          7 -> :or_identity
-          8 -> :channel_closed
-          9 -> :finished
-          10 -> :timeout
-          11 -> :destroyed
-        end
-    }
+    reason =
+      case reason do
+        0 -> :none
+        1 -> :protocol
+        2 -> :internal
+        3 -> :requested
+        4 -> :hibernating
+        5 -> :resourcelimit
+        6 -> :connectfailed
+        7 -> :or_identity
+        8 -> :channel_closed
+        9 -> :finished
+        10 -> :timeout
+        11 -> :destroyed
+      end
+
+    %TorCell.Destroy{reason: reason}
   end
 
-  @doc """
-  Encodes a TorCell.Destroy into a binary.
-
-  Returns a binary corresponding to the payload of a DESTROY TorCell.
-  """
+  @spec encode(TorCell.Destroy) :: binary()
   def encode(cell) do
-    error =
+    reason =
       case cell.reason do
         :none -> <<0>>
         :protocol -> <<1>>
@@ -52,6 +60,6 @@ defmodule TorCell.Destroy do
         :destroyed -> <<11>>
       end
 
-    error <> <<0::508*8>>
+    reason <> <<0::508*8>>
   end
 end

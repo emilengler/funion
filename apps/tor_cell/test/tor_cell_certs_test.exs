@@ -4,7 +4,7 @@ defmodule TorCellCertsTest do
   use ExUnit.Case
   doctest TorCell.Certs
 
-  test "decodes a CERTS TorCell" do
+  test "decodes a TorCell.Certs cell" do
     raw =
       <<1, 4, 0, 7, 33, 196, 1, 21, 195, 194, 141, 132, 50, 207, 113, 139, 70, 72, 23, 89, 84,
         174, 235, 255, 176, 47, 135, 165, 114, 166, 20, 243, 149, 223, 81, 221, 149, 34, 121, 1,
@@ -21,7 +21,7 @@ defmodule TorCellCertsTest do
     assert TorCell.Certs.decode(payload) == %TorCell.Certs{
              certs: [
                %TorCell.Certs.Cert{
-                 cert: %TorCert.Ed25519{
+                 certificate: %TorCert.Ed25519{
                    cert_key_type: :ed25519,
                    cert_type: :ed25519_signing_id,
                    certified_key:
@@ -46,17 +46,17 @@ defmodule TorCellCertsTest do
                        144, 214, 70, 133, 170, 155, 176, 21, 31, 30, 86, 51, 140, 142, 132, 60,
                        4>>
                  },
-                 type: :ed25519_id_signing
+                 cert_type: :ed25519_id_signing
                }
              ]
            }
   end
 
-  test "encodes a CERTS TorCell" do
+  test "encodes a TorCell.Certs cell" do
     cell = %TorCell.Certs{
       certs: [
         %TorCell.Certs.Cert{
-          cert: %TorCert.Ed25519{
+          certificate: %TorCert.Ed25519{
             cert_key_type: :ed25519,
             cert_type: :ed25519_signing_id,
             certified_key:
@@ -78,7 +78,7 @@ defmodule TorCellCertsTest do
                 91, 196, 103, 40, 144, 114, 231, 206, 29, 192, 53, 144, 214, 70, 133, 170, 155,
                 176, 21, 31, 30, 86, 51, 140, 142, 132, 60, 4>>
           },
-          type: :ed25519_id_signing
+          cert_type: :ed25519_id_signing
         }
       ]
     }

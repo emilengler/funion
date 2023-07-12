@@ -4,6 +4,33 @@ defmodule TorCertEd25519Test do
   use ExUnit.Case
   doctest TorCert.Ed25519
 
+  test "decodes a TorCert.Ed25519" do
+    extensions = <<32::16, 0x04, 0, 0::8*32, 32::16, 0x04, 1, 0::8*32>>
+    data = <<1, 0x04, 0::32, 1, 0::8*32, 2>> <> extensions <> <<0::128*8>>
+
+    cert = TorCert.Ed25519.decode(data)
+
+    assert cert == %TorCert.Ed25519{
+             cert_type: :ed25519_signing_id,
+             expiration_date: DateTime.from_unix!(0),
+             cert_key_type: :ed25519,
+             certified_key: <<0::8*32>>,
+             extensions: [
+               %TorCert.Ed25519.Extension{
+                 type: :signed_with_ed25519_key,
+                 flags: nil,
+                 data: <<0::8*32>>
+               },
+               %TorCert.Ed25519.Extension{
+                 type: :signed_with_ed25519_key,
+                 flags: :affects_validation,
+                 data: <<0::8*32>>
+               }
+             ],
+             signature: <<0::8*64>>
+           }
+  end
+
   test "fetches a TorCert.Ed25519" do
     extensions =
       <<32::16>> <>

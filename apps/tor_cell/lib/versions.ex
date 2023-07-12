@@ -1,14 +1,12 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Versions do
+  @enforce_keys [:versions]
   defstruct versions: nil
 
-  @doc """
-  Decodes the payload of a VERSIONS TorCell into its internal representation.
+  @type t :: %TorCell.Versions{versions: list()}
 
-  Returns a TorCell.Versions with versions being a list of all versions given
-  in this cell.
-  """
+  @spec decode(binary()) :: TorCell.Versions
   def decode(payload) do
     %TorCell.Versions{
       versions:
@@ -19,13 +17,8 @@ defmodule TorCell.Versions do
     }
   end
 
-  @doc """
-  Encodes a TorCell.Versions into a binary.
-
-  Returns a binary corresponding to the payload of a VERSIONS TorCell.
-  """
+  @spec encode(TorCell.Versions) :: binary()
   def encode(cell) do
-    # TODO: Maybe an overflow check here?
     Enum.join(Enum.map(cell.versions, fn z -> <<z::16>> end))
   end
 end

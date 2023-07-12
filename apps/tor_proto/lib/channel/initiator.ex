@@ -62,14 +62,14 @@ defmodule TorProto.Channel.Initiator do
   end
 
   defp is_valid_cert?(cert, keys) do
-    case cert.type do
-      :rsa_link -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
-      :rsa_id -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
-      :rsa_auth -> :public_key.pkix_verify(cert.cert, keys.rsa_identity)
-      :ed25519_id_signing -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_identity)
-      :ed25519_signing_link -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_signing)
-      :ed25519_signing_auth -> TorCert.Ed25519.is_valid?(cert.cert, keys.ed25519_signing)
-      :rsa_ed25519_cross_cert -> TorCert.RsaEd25519.is_valid?(cert.cert, keys.rsa_identity)
+    case cert.cert_type do
+      :rsa_link -> :public_key.pkix_verify(cert.certificate, keys.rsa_identity)
+      :rsa_id -> :public_key.pkix_verify(cert.certificate, keys.rsa_identity)
+      :rsa_auth -> :public_key.pkix_verify(cert.certificate, keys.rsa_identity)
+      :ed25519_id_signing -> TorCert.Ed25519.is_valid?(cert.certificate, keys.ed25519_identity)
+      :ed25519_signing_link -> TorCert.Ed25519.is_valid?(cert.certificate, keys.ed25519_signing)
+      :ed25519_signing_auth -> TorCert.Ed25519.is_valid?(cert.certificate, keys.ed25519_signing)
+      :rsa_ed25519_cross_cert -> TorCert.RsaEd25519.is_valid?(cert.certificate, keys.rsa_identity)
     end
   end
 

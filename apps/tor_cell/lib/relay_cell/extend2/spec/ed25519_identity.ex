@@ -1,17 +1,21 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.RelayCell.Extend2.Spec.Ed25519Identity do
+  @enforce_keys [:fingerprint]
   defstruct fingerprint: nil
 
-  # TODO: Document this
+  @type t :: %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: :crypto.ecdh_public()}
+
+  @spec decode(binary()) :: TorCell.RelayCell.Extend2.Spec.Ed25519Identity
   def decode(spec) do
-    true = byte_size(spec) == 32
-    %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: spec}
+    remaining = spec
+    <<pubkey::binary-size(32), _::binary>> = remaining
+
+    %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: pubkey}
   end
 
-  # TODO: Document this
+  @spec encode(TorCell.RelayCell.Extend2.Spec.Ed25519Identity) :: binary()
   def encode(spec) do
-    true = byte_size(spec.fingerprint) == 32
     spec.fingerprint
   end
 end

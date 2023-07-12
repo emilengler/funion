@@ -1,67 +1,32 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Authenticate do
-  defstruct type: nil,
-            auth: nil
+  @enforce_keys [:auth_type, :authentication]
+  defstruct auth_type: nil,
+            authentication: nil
 
-  defp decode_type(type) do
-    case type do
-      1 -> :rsa_sha256_tlssecret
-      3 -> :ed25519_sha256_rfc5705
-    end
-  end
+  @type t :: %TorCell.Authenticate{auth_type: auth_type(), authentication: authentication()}
+  @type auth_type :: :ed25519_sha256_rfc5705
+  @type authentication :: TorCell.Authenticate.Ed25519Sha256Rfc5705
 
-  defp decode_auth(auth, type) do
-    case type do
-      :rsa_sha256_tlssecret -> TorCell.Authenticate.RsaSha256Tlssecret.decode(auth)
-      :ed25519_sha256_rfc5705 -> TorCell.Authenticate.Ed25519Sha256Rfc5705.decode(auth)
-    end
-  end
-
-  defp encode_type(type) do
-    case type do
-      :rsa_sha256_tlssecret -> <<1::16>>
-      :ed25519_sha256_rfc5705 -> <<3::16>>
-    end
-  end
-
-  defp encode_auth(auth, type) do
-    case type do
-      :rsa_sha256_tlssecret -> TorCell.Authenticate.RsaSha256Tlssecret.encode(auth)
-      :ed25519_sha256_rfc5705 -> TorCell.Authenticate.Ed25519Sha256Rfc5705.encode(auth)
-    end
-  end
-
-  @doc """
-  Decodes the payload of an AUTHENTICATE TorCell into its internal
-  representation.
-
-  Returns a TorCell.Authenticate with type being an atom and
-  auth either an TorCell.Authenticate.RsaSha256Tlssecret or
-  TorCell.Authenticate.Ed25519Sha256Rfc5075.
-  """
+  @spec decode(binary()) :: TorCell.Authenticate
   def decode(payload) do
-    <<type::16, payload::binary>> = payload
-    <<len::16, payload::binary>> = payload
-    <<auth::binary-size(len), _::binary>> = payload
-
-    type = decode_type(type)
-    auth = decode_auth(auth, type)
+    remaining = payload
+    <<3::16, remaining::binary>> = remaining
+    <<auth_len::16, remaining::binary>> = remaining
+    <<authentication::binary-size(auth_len), _::binary>> = remaining
 
     %TorCell.Authenticate{
-      type: type,
-      auth: auth
+      auth_type: :ed25519_sha256_rfc5705,
+      authentication: TorCell.Authenticate.Ed25519Sha256Rfc5705.decode(authentication)
     }
   end
 
-  @doc """
-  Encodes a TorCell.Authenticate into a binary.
-
-  Returns a binary corresponding to the payloaf of an AUTHENTICATE TorCell.
-  """
+  @spec encode(TorCell.Authenticate) :: binary()
   def encode(cell) do
-    type = encode_type(cell.type)
-    auth = encode_auth(cell.auth, cell.type)
-    type <> <<byte_size(auth)::16>> <> auth
+    :ed25519_sha256_rfc5705 = cell.auth_type
+    authentication = TorCell.Authenticate.Ed25519Sha256Rfc5705.encode(cell.authentication)
+
+    <<3::16, byte_size(authentication)::16>> <> authentication
   end
 end

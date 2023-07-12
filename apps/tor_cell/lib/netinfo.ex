@@ -1,69 +1,64 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Netinfo do
+  @enforce_keys [:time, :otheraddr, :myaddrs]
   defstruct time: nil,
             otheraddr: nil,
             myaddrs: nil
 
-  defp encode_addr(addr) do
-    atype =
-      case tuple_size(addr) do
-        4 -> 0x04
-        16 -> 0x06
-      end
+  @type t :: %TorCell.Netinfo{time: DateTime.t(), otheraddr: tuple(), myaddrs: list()}
 
-    <<atype>> <> <<tuple_size(addr)>> <> :binary.list_to_bin(Tuple.to_list(addr))
-  end
-
+  @spec fetch_addr(binary()) :: tuple()
   defp fetch_addr(payload) do
-    # TODO: Enforce the type
-    <<_, payload::binary>> = payload
-    <<alen, payload::binary>> = payload
-    <<aval::binary-size(alen), payload::binary>> = payload
-    # TODO: Parse to an ACTUAL IP data type
-    {List.to_tuple(:binary.bin_to_list(aval)), payload}
+    remaining = payload
+    <<atype, remaining::binary>> = remaining
+    <<alen, remaining::binary>> = remaining
+    <<aval::binary-size(alen), remaining::binary>> = remaining
+    true = atype == 4 || atype == 6
+    true = alen == 4 || alen == 16
+
+    {List.to_tuple(:binary.bin_to_list(aval)), remaining}
   end
 
-  defp fetch_myaddrs(addrs, n, payload) when n > 0 do
-    {addr, payload} = fetch_addr(payload)
-    fetch_myaddrs(addrs ++ [addr], n - 1, payload)
+  @spec fetch_myaddrs(binary(), integer(), list()) :: {list(), binary()}
+  defp fetch_myaddrs(payload, nmyaddrs, addrs) when nmyaddrs > 0 do
+    {addr, remaining} = fetch_addr(payload)
+    fetch_myaddrs(remaining, nmyaddrs - 1, addrs ++ [addr])
   end
 
-  defp fetch_myaddrs(addrs, _, payload) do
+  @spec fetch_myaddrs(binary(), integer(), list()) :: {list(), binary()}
+  defp fetch_myaddrs(payload, _, addrs) do
     {addrs, payload}
   end
 
-  defp fetch_myaddrs(payload) do
-    <<n, payload::binary>> = payload
-    fetch_myaddrs([], n, payload)
+  @spec encode_addr(tuple()) :: binary()
+  defp encode_addr(addr) do
+    atype =
+      case tuple_size(addr) do
+        4 -> 4
+        16 -> 6
+      end
+
+    <<atype, tuple_size(addr)>> <> :binary.list_to_bin(Tuple.to_list(addr))
   end
 
-  @doc """
-  Decodes the payload of a NETINFO TorCell into its internal representation.
-
-  Returns a TorCell.Netinfo with the fields set accordingly.
-  """
+  @spec decode(binary()) :: TorCell.Netinfo
   def decode(payload) do
-    <<time::32, payload::binary>> = payload
-    {otheraddr, payload} = fetch_addr(payload)
-    {myaddrs, _} = fetch_myaddrs(payload)
+    remaining = payload
+    <<time::32, remaining::binary>> = remaining
+    time = DateTime.from_unix!(time)
+    {otheraddr, remaining} = fetch_addr(remaining)
+    <<nmyaddress, remaining::binary>> = remaining
+    {myaddrs, _} = fetch_myaddrs(remaining, nmyaddress, [])
 
-    %TorCell.Netinfo{
-      time: DateTime.from_unix!(time),
-      otheraddr: otheraddr,
-      myaddrs: myaddrs
-    }
+    %TorCell.Netinfo{time: time, otheraddr: otheraddr, myaddrs: myaddrs}
   end
 
-  @doc """
-  Encodes a TorCell.Netinfo into a binary.
-
-  Returns a binary corresponding to the payload of a NETINFO TorCell.
-  """
+  @spec encode(TorCell.Netinfo) :: binary()
   def encode(cell) do
     <<DateTime.to_unix(cell.time)::32>> <>
       encode_addr(cell.otheraddr) <>
       <<length(cell.myaddrs)>> <>
-      Enum.join(Enum.map(cell.myaddrs, fn x -> encode_addr(x) end))
+      Enum.join(Enum.map(cell.myaddrs, fn addr -> encode_addr(addr) end))
   end
 end

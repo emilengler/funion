@@ -1,58 +1,46 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.AuthChallenge do
+  @enforce_keys [:challenge, :methods]
   defstruct challenge: nil,
             methods: nil
 
-  defp decode_method(method) do
-    case method do
-      1 -> :rsa_sha256_tlssecret
-      3 -> :ed25519_sha256_rfc5705
-    end
-  end
+  @type t :: %TorCell.AuthChallenge{challenge: binary(), methods: list()}
 
-  defp decode_methods(methods) do
-    # TODO: Enforce N_METHODS.
-    <<_::16, methods::binary>> = methods
-
-    for <<method::16 <- methods>> do
-      decode_method(method)
-    end
-  end
-
-  defp encode_method(method) do
-    case method do
-      :rsa_sha256_tlssecret -> <<1::16>>
-      :ed25519_sha256_rfc5705 -> <<3::16>>
-    end
-  end
-
-  defp encode_methods(methods) do
-    Enum.join(Enum.map(methods, fn x -> encode_method(x) end))
-  end
-
-  @doc """
-  Decodes the payload of an AUTH_CHALLENGE TorCell into its internal
-  representation.
-
-  Returns a TorCell.AuthChallenge with challenge being a 32-byte binary and
-  methods an atom.
-  """
+  @spec decode(binary()) :: TorCell.AuthChallenge
   def decode(payload) do
-    <<challenge::binary-size(32), payload::binary>> = payload
+    remaining = payload
+    <<challenge::binary-size(32), remaining::binary>> = remaining
+    <<n_methods::16, remaining::binary>> = remaining
+    <<methods::binary-size(2 * n_methods), _::binary>> = remaining
 
-    %TorCell.AuthChallenge{
-      challenge: challenge,
-      methods: decode_methods(payload)
-    }
+    methods = Enum.chunk_every(:binary.bin_to_list(methods), 2)
+
+    methods =
+      Enum.map(methods, fn bytes ->
+        <<method::16>> = :binary.list_to_bin(bytes)
+
+        case method do
+          1 -> :rsa_sha256_tlssecret
+          3 -> :ed25519_sha256_rfc5705
+        end
+      end)
+
+    %TorCell.AuthChallenge{challenge: challenge, methods: methods}
   end
 
-  @doc """
-  Encodes a TorCell.AuthChallenge into a binary.
-
-  Returns a binary corresponding to the payload of an AUTH_CHALLENGE TorCell.
-  """
+  @spec encode(TorCell.AuthChallenge) :: binary()
   def encode(cell) do
-    cell.challenge <> <<length(cell.methods)::16>> <> encode_methods(cell.methods)
+    methods =
+      Enum.join(
+        Enum.map(cell.methods, fn method ->
+          case method do
+            :rsa_sha256_tlssecret -> <<1::16>>
+            :ed25519_sha256_rfc5705 -> <<3::16>>
+          end
+        end)
+      )
+
+    <<cell.challenge::binary-size(32), length(cell.methods)::16>> <> methods
   end
 end

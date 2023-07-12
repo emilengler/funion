@@ -1,38 +1,33 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Certs do
+  @enforce_keys [:certs]
   defstruct certs: nil
 
-  defp fetch_certs(certs, n, payload) when n > 0 do
-    {cert, payload} = TorCell.Certs.Cert.fetch(payload)
-    fetch_certs(certs ++ [cert], n - 1, payload)
+  @type t :: %TorCell.Certs{certs: certs()}
+  @type certs :: list(cert())
+  @type cert :: TorCell.Certs.Cert
+
+  @spec decode_certs(binary(), integer(), certs()) :: certs()
+  defp decode_certs(payload, n, certs) when n > 0 do
+    {cert, remaining} = TorCell.Certs.Cert.fetch(payload)
+    decode_certs(remaining, n - 1, certs ++ [cert])
   end
 
-  defp fetch_certs(certs, _, payload) do
-    {certs, payload}
+  @spec decode_certs(binary(), integer(), certs()) :: certs()
+  defp decode_certs(_, _, certs) do
+    certs
   end
 
-  @doc """
-  Decodes the payload of a CERTS TorCell into its internal representation.
-
-  Returns a TorCell.Certs with certs being a list of all certificates.
-  """
+  @spec decode(binary()) :: TorCell.Certs
   def decode(payload) do
-    <<n, payload::binary>> = payload
-    {certs, _} = fetch_certs([], n, payload)
-
-    %TorCell.Certs{
-      certs: certs
-    }
+    remaining = payload
+    <<n, remaining::binary>> = remaining
+    %TorCell.Certs{certs: decode_certs(remaining, n, [])}
   end
 
-  @doc """
-  Encodes a TorCell.Certs into a binary.
-
-  Returns a binary corresponding to the payload of a CERTS TorCell.
-  """
+  @spec encode(TorCell.Certs) :: binary()
   def encode(cell) do
-    # TODO: Check for overflow
     <<length(cell.certs)>> <>
       Enum.join(Enum.map(cell.certs, fn x -> TorCell.Certs.Cert.encode(x) end))
   end

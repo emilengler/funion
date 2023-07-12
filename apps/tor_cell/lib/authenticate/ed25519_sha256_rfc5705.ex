@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
+  @enforce_keys [:cid, :sid, :cid_ed, :sid_ed, :slog, :clog, :scert, :tlssecrets, :rand, :sig]
   defstruct cid: nil,
             sid: nil,
             cid_ed: nil,
@@ -12,27 +13,33 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
             rand: nil,
             sig: nil
 
-  @doc """
-  Decodes the payload of the Authentication field inside an AUTHENTICATE
-  TorCell into its internal representation.
+  @type t :: %TorCell.Authenticate.Ed25519Sha256Rfc5705{
+          cid: binary(),
+          sid: binary(),
+          cid_ed: binary(),
+          sid_ed: binary(),
+          slog: binary(),
+          clog: binary(),
+          scert: binary(),
+          tlssecrets: binary(),
+          rand: binary(),
+          sig: binary()
+        }
 
-  Returns a TorCell.Authenticate.Ed25519Sha256Rfc5705 with the fields being
-  set accordingly.
-  """
+  @spec decode(binary()) :: TorCell.Authenticate.Ed25519Sha256Rfc5705
   def decode(payload) do
-    # Skip the AUTH0003
-    # TODO: Validate the AUTH0003
-    <<_::binary-size(8), payload::binary>> = payload
-    <<cid::binary-size(32), payload::binary>> = payload
-    <<sid::binary-size(32), payload::binary>> = payload
-    <<cid_ed::binary-size(32), payload::binary>> = payload
-    <<sid_ed::binary-size(32), payload::binary>> = payload
-    <<slog::binary-size(32), payload::binary>> = payload
-    <<clog::binary-size(32), payload::binary>> = payload
-    <<scert::binary-size(32), payload::binary>> = payload
-    <<tlssecrets::binary-size(32), payload::binary>> = payload
-    <<rand::binary-size(24), payload::binary>> = payload
-    # The remaining payload is considered to be the sig
+    remaining = payload
+    <<"AUTH0003", remaining::binary>> = remaining
+    <<cid::binary-size(32), remaining::binary>> = remaining
+    <<sid::binary-size(32), remaining::binary>> = remaining
+    <<cid_ed::binary-size(32), remaining::binary>> = remaining
+    <<sid_ed::binary-size(32), remaining::binary>> = remaining
+    <<slog::binary-size(32), remaining::binary>> = remaining
+    <<clog::binary-size(32), remaining::binary>> = remaining
+    <<scert::binary-size(32), remaining::binary>> = remaining
+    <<tlssecrets::binary-size(32), remaining::binary>> = remaining
+    <<rand::binary-size(24), remaining::binary>> = remaining
+    sig = remaining
 
     %TorCell.Authenticate.Ed25519Sha256Rfc5705{
       cid: cid,
@@ -44,27 +51,15 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
       scert: scert,
       tlssecrets: tlssecrets,
       rand: rand,
-      sig: payload
+      sig: sig
     }
   end
 
-  @doc """
-  Encodes a TorCell.Authenticate.Ed25519Sha256Rfc5705 into a binary.
-
-  Returns a binary corresponding to the binary representation of an
-  authentication, as found within the AUTHENTICATE TorCell.
-  """
+  @spec encode(TorCell.Authenticate.Ed25519Sha256Rfc5705) :: binary()
   def encode(auth) do
-    "AUTH0003" <>
-      <<auth.cid::binary-size(32)>> <>
-      <<auth.sid::binary-size(32)>> <>
-      <<auth.cid_ed::binary-size(32)>> <>
-      <<auth.sid_ed::binary-size(32)>> <>
-      <<auth.slog::binary-size(32)>> <>
-      <<auth.clog::binary-size(32)>> <>
-      <<auth.scert::binary-size(32)>> <>
-      <<auth.tlssecrets::binary-size(32)>> <>
-      <<auth.rand::binary-size(24)>> <>
-      auth.sig
+    <<"AUTH0003", auth.cid::binary-size(32), auth.sid::binary-size(32),
+      auth.cid_ed::binary-size(32), auth.sid_ed::binary-size(32), auth.slog::binary-size(32),
+      auth.clog::binary-size(32), auth.scert::binary-size(32), auth.tlssecrets::binary-size(32),
+      auth.rand::binary-size(24)>> <> auth.sig
   end
 end

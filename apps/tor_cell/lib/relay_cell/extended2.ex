@@ -1,17 +1,22 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.RelayCell.Extended2 do
-  defstruct data: nil
+  @enforce_keys [:hdata]
+  defstruct hdata: nil
 
-  # TODO: Document this
-  def decode(data) do
-    <<len::16, data::binary>> = data
-    <<data::binary-size(len)>> = data
-    %TorCell.RelayCell.Extended2{data: data}
+  @type t :: %TorCell.RelayCell.Extended2{hdata: binary()}
+
+  @spec decode(binary()) :: TorCell.RelayCell.Extended2
+  def decode(payload) do
+    remaining = payload
+    <<hlen::16, remaining::binary>> = remaining
+    <<hdata::binary-size(hlen), _::binary>> = remaining
+
+    %TorCell.RelayCell.Extended2{hdata: hdata}
   end
 
-  # TODO: Document this
+  @spec encode(TorCell.RelayCell.Extended2) :: binary()
   def encode(cell) do
-    <<byte_size(cell.data)::16>> <> cell.data
+    <<byte_size(cell.hdata)::16>> <> cell.hdata
   end
 end

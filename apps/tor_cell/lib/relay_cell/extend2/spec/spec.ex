@@ -1,11 +1,21 @@
 # SPDX-License-Identifier: ISC
 
 defmodule TorCell.RelayCell.Extend2.Spec do
-  defstruct type: nil,
-            spec: nil
+  @enforce_keys [:lstype, :lspec]
+  defstruct lstype: nil,
+            lspec: nil
 
-  def decode_type(type) do
-    case type do
+  @type t :: %TorCell.RelayCell.Extend2.Spec{lstype: lstype(), lspec: lspec()}
+  @type lstype :: :tls_over_tcp4 | :tls_over_tcp6 | :legacy_identity | :ed25519_identity
+  @type lspec ::
+          TorCell.RelayCell.Extend2.Spec.TlsOverTcp4
+          | TorCell.RelayCell.Extend2.Spec.TlsOverTcp6
+          | TorCell.RelayCell.Extend2.Spec.LegacyIdentity
+          | TorCell.RelayCell.Extend2.Spec.Ed25519Identity
+
+  @spec decode_lstype(integer()) :: lstype()
+  defp decode_lstype(lstype) do
+    case lstype do
       0 -> :tls_over_tcp4
       1 -> :tls_over_tcp6
       2 -> :legacy_identity
@@ -13,17 +23,19 @@ defmodule TorCell.RelayCell.Extend2.Spec do
     end
   end
 
-  defp decode_spec(type, spec) do
-    case type do
-      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.decode(spec)
-      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.decode(spec)
-      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.decode(spec)
-      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.decode(spec)
+  @spec decode_lspec(lstype(), binary()) :: lspec()
+  defp decode_lspec(lstype, lspec) do
+    case lstype do
+      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.decode(lspec)
+      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.decode(lspec)
+      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.decode(lspec)
+      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.decode(lspec)
     end
   end
 
-  defp encode_type(type) do
-    case type do
+  @spec encode_lstype(lstype()) :: binary()
+  defp encode_lstype(lstype) do
+    case lstype do
       :tls_over_tcp4 -> <<0>>
       :tls_over_tcp6 -> <<1>>
       :legacy_identity -> <<2>>
@@ -31,29 +43,32 @@ defmodule TorCell.RelayCell.Extend2.Spec do
     end
   end
 
-  defp encode_spec(type, spec) do
-    case type do
-      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.encode(spec)
-      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.encode(spec)
-      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.encode(spec)
-      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.encode(spec)
+  @spec encode_lspec(lstype(), lspec()) :: binary()
+  defp encode_lspec(lstype, lspec) do
+    case lstype do
+      :tls_over_tcp4 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.encode(lspec)
+      :tls_over_tcp6 -> TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.encode(lspec)
+      :legacy_identity -> TorCell.RelayCell.Extend2.Spec.LegacyIdentity.encode(lspec)
+      :ed25519_identity -> TorCell.RelayCell.Extend2.Spec.Ed25519Identity.encode(lspec)
     end
   end
 
-  # TODO: Document this
-  def fetch(payload) do
-    <<type, payload::binary>> = payload
-    type = decode_type(type)
-    <<len, payload::binary>> = payload
-    <<spec::binary-size(len), payload::binary>> = payload
-    spec = decode_spec(type, spec)
+  @spec fetch(binary()) :: {TorCell.RelayCell.Extend2.Spec, binary()}
+  def fetch(data) do
+    remaining = data
+    <<lstype, remaining::binary>> = remaining
+    <<lslen, remaining::binary>> = remaining
+    <<lspec::binary-size(lslen), remaining::binary>> = remaining
 
-    {%TorCell.RelayCell.Extend2.Spec{type: type, spec: spec}, payload}
+    lstype = decode_lstype(lstype)
+    lspec = decode_lspec(lstype, lspec)
+
+    {%TorCell.RelayCell.Extend2.Spec{lstype: lstype, lspec: lspec}, remaining}
   end
 
-  # TODO: Document this
+  @spec encode(TorCell.RelayCell.Extend2.Spec) :: binary()
   def encode(spec) do
-    encoded = encode_spec(spec.type, spec.spec)
-    encode_type(spec.type) <> <<byte_size(encoded)>> <> encoded
+    encoded = encode_lspec(spec.lstype, spec.lspec)
+    encode_lstype(spec.lstype) <> <<byte_size(encoded)>> <> encoded
   end
 end

@@ -65,6 +65,30 @@ defmodule TorCert.Ed25519 do
   end
 
   @doc """
+  Decodes an Ed25519 into its internal representation.
+  """
+  def decode(data) do
+    remaining = data
+    <<1, remaining::binary>> = remaining
+    <<cert_type, remaining::binary>> = remaining
+    <<expiration_date::32, remaining::binary>> = remaining
+    <<cert_key_type, remaining::binary>> = remaining
+    <<certified_key::binary-size(32), remaining::binary>> = remaining
+    <<n_extensions, remaining::binary>> = remaining
+    {extensions, remaining} = fetch_extensions([], n_extensions, remaining)
+    <<signature::binary-size(64), _::binary>> = remaining
+
+    %TorCert.Ed25519{
+      cert_type: decode_cert_type(cert_type),
+      expiration_date: decode_expiration_date(expiration_date),
+      cert_key_type: decode_cert_key_type(cert_key_type),
+      certified_key: certified_key,
+      extensions: extensions,
+      signature: signature
+    }
+  end
+
+  @doc """
   Fetches the first Ed25519 certificate in a binary.
 
   Returns the internal representation of the found certificate, alongside

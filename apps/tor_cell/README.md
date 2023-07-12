@@ -1,4 +1,3 @@
 # TorCell
 
-An implementation of the Tor Cell data type in Elixir.
-
+An implementation of the cells specified within `tor-spec.txt`.

@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: ISC
-
 defmodule TorCell.MixProject do
   use Mix.Project
 
@@ -11,17 +9,17 @@ defmodule TorCell.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.13",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      licenses: ["ISC"]
+      license: ["ISC"]
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :public_key]
+      extra_applications: [:logger, :crypto, :public_key]
     ]
   end
 
