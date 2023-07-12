@@ -19,6 +19,24 @@ defmodule TorCert.RsaEd25519 do
   end
 
   @doc """
+  Decodes an RSA->Ed25519 cross-certificate into its internal representation.
+  """
+  def decode(data) do
+    remaining = data
+    <<ed25519_key::binary-size(32), remaining::binary>> = remaining
+    <<expiration_date::32, remaining::binary>> = remaining
+    <<siglen, remaining::binary>> = remaining
+    <<signature::binary-size(siglen), _::binary>> = remaining
+    expiration_date = decode_expiration_date(expiration_date)
+
+    %TorCert.RsaEd25519{
+      ed25519_key: ed25519_key,
+      expiration_date: expiration_date,
+      signature: signature
+    }
+  end
+
+  @doc """
   Fetches the first RSA->Ed25519 cross-certificate in a binary.
 
   Returns the internal representation of the found certificate, alongside
