@@ -55,7 +55,7 @@ defmodule TorCell.RelayCell do
     case cmd do
       :begin -> TorCell.RelayCell.Data.encode(data)
       :data -> TorCell.RelayCell.Data.encode(data)
-      :connected -> TorCell.RelayCell.encode(data)
+      :connected -> TorCell.RelayCell.Connected.encode(data)
     end
   end
 
