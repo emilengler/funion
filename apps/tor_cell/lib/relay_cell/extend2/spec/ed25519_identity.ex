@@ -6,7 +6,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.Ed25519Identity do
 
   @type t :: %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: :crypto.ecdh_public()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Extend2.Spec.Ed25519Identity
+  @spec decode(binary()) :: t()
   def decode(spec) do
     remaining = spec
     <<pubkey::binary-size(32), _::binary>> = remaining
@@ -14,7 +14,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.Ed25519Identity do
     %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{fingerprint: pubkey}
   end
 
-  @spec encode(TorCell.RelayCell.Extend2.Spec.Ed25519Identity) :: binary()
+  @spec encode(t()) :: binary()
   def encode(spec) do
     spec.fingerprint
   end

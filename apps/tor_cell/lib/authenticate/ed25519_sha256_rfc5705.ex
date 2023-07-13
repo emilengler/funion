@@ -26,7 +26,7 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
           sig: binary()
         }
 
-  @spec decode(binary()) :: TorCell.Authenticate.Ed25519Sha256Rfc5705
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<"AUTH0003", remaining::binary>> = remaining
@@ -55,7 +55,7 @@ defmodule TorCell.Authenticate.Ed25519Sha256Rfc5705 do
     }
   end
 
-  @spec encode(TorCell.Authenticate.Ed25519Sha256Rfc5705) :: binary()
+  @spec encode(t()) :: binary()
   def encode(auth) do
     <<"AUTH0003", auth.cid::binary-size(32), auth.sid::binary-size(32),
       auth.cid_ed::binary-size(32), auth.sid_ed::binary-size(32), auth.slog::binary-size(32),

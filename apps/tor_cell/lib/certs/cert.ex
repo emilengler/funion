@@ -14,7 +14,7 @@ defmodule TorCell.Certs.Cert do
           | :ed25519_signing_link
           | :ed25510_signing_auth
           | :rsa_ed25519_cross_cert
-  @type certificate :: binary() | TorCert.Ed25519 | TorCert.RsaEd25519
+  @type certificate :: binary() | TorCert.Ed25519.t() | TorCert.RsaEd25519.t()
 
   @spec decode_cert_type(integer()) :: cert_type()
   defp decode_cert_type(cert_type) do
@@ -68,7 +68,7 @@ defmodule TorCell.Certs.Cert do
     end
   end
 
-  @spec fetch(binary()) :: {TorCell.Certs.Cert, binary()}
+  @spec fetch(binary()) :: {t(), binary()}
   def fetch(payload) do
     remaining = payload
     <<cert_type, remaining::binary>> = remaining
@@ -81,7 +81,7 @@ defmodule TorCell.Certs.Cert do
     {%TorCell.Certs.Cert{cert_type: cert_type, certificate: certificate}, remaining}
   end
 
-  @spec encode(TorCell.Certs.Cert) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cert) do
     encoded = encode_certificate(cert.cert_type, cert.certificate)
     encode_cert_type(cert.cert_type) <> <<byte_size(encoded)::16>> <> encoded

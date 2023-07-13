@@ -6,7 +6,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.LegacyIdentity do
 
   @type t :: %TorCell.RelayCell.Extend2.Spec.LegacyIdentity{fingerprint: binary()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Extend2.Spec.LegacyIdentity
+  @spec decode(binary()) :: t()
   def decode(spec) do
     remaining = spec
     <<pubkey::binary-size(20), _::binary>> = remaining
@@ -14,7 +14,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.LegacyIdentity do
     %TorCell.RelayCell.Extend2.Spec.LegacyIdentity{fingerprint: pubkey}
   end
 
-  @spec encode(TorCell.RelayCell.Extend2.Spec.LegacyIdentity) :: binary()
+  @spec encode(t()) :: binary()
   def encode(spec) do
     spec.fingerprint
   end

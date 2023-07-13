@@ -6,12 +6,12 @@ defmodule TorCell.Vpadding do
 
   @type t :: %TorCell.Vpadding{padding: binary()}
 
-  @spec decode(binary()) :: TorCell.Vpadding
+  @spec decode(binary()) :: t()
   def decode(payload) do
     %TorCell.Vpadding{padding: payload}
   end
 
-  @spec encode(TorCell.Vpadding) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     cell.padding
   end

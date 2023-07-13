@@ -6,13 +6,13 @@ defmodule TorCell.Padding do
 
   @type t :: %TorCell.Padding{padding: binary()}
 
-  @spec decode(binary()) :: TorCell.Padding
+  @spec decode(binary()) :: t()
   def decode(payload) do
     <<padding::binary-size(509)>> = payload
     %TorCell.Padding{padding: padding}
   end
 
-  @spec encode(TorCell.Padding) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<cell.padding::binary-size(509)>>
   end

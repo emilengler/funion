@@ -6,7 +6,7 @@ defmodule TorCell.Created2 do
 
   @type t :: %TorCell.Created2{hdata: binary()}
 
-  @spec decode(binary()) :: TorCell.Created2
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<hlen::16, remaining::binary>> = remaining
@@ -15,7 +15,7 @@ defmodule TorCell.Created2 do
     %TorCell.Created2{hdata: hdata}
   end
 
-  @spec encode(TorCell.Created2) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<byte_size(cell.hdata)::16>> <> cell.hdata
   end

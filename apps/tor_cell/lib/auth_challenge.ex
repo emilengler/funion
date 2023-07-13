@@ -7,7 +7,7 @@ defmodule TorCell.AuthChallenge do
 
   @type t :: %TorCell.AuthChallenge{challenge: binary(), methods: list()}
 
-  @spec decode(binary()) :: TorCell.AuthChallenge
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<challenge::binary-size(32), remaining::binary>> = remaining
@@ -29,7 +29,7 @@ defmodule TorCell.AuthChallenge do
     %TorCell.AuthChallenge{challenge: challenge, methods: methods}
   end
 
-  @spec encode(TorCell.AuthChallenge) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     methods =
       Enum.join(

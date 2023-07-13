@@ -8,10 +8,10 @@ defmodule TorCell.RelayCell.Extend2.Spec do
   @type t :: %TorCell.RelayCell.Extend2.Spec{lstype: lstype(), lspec: lspec()}
   @type lstype :: :tls_over_tcp4 | :tls_over_tcp6 | :legacy_identity | :ed25519_identity
   @type lspec ::
-          TorCell.RelayCell.Extend2.Spec.TlsOverTcp4
-          | TorCell.RelayCell.Extend2.Spec.TlsOverTcp6
-          | TorCell.RelayCell.Extend2.Spec.LegacyIdentity
-          | TorCell.RelayCell.Extend2.Spec.Ed25519Identity
+          TorCell.RelayCell.Extend2.Spec.TlsOverTcp4.t()
+          | TorCell.RelayCell.Extend2.Spec.TlsOverTcp6.t()
+          | TorCell.RelayCell.Extend2.Spec.LegacyIdentity.t()
+          | TorCell.RelayCell.Extend2.Spec.Ed25519Identity.t()
 
   @spec decode_lstype(integer()) :: lstype()
   defp decode_lstype(lstype) do
@@ -53,7 +53,7 @@ defmodule TorCell.RelayCell.Extend2.Spec do
     end
   end
 
-  @spec fetch(binary()) :: {TorCell.RelayCell.Extend2.Spec, binary()}
+  @spec fetch(binary()) :: {t(), binary()}
   def fetch(data) do
     remaining = data
     <<lstype, remaining::binary>> = remaining
@@ -66,7 +66,7 @@ defmodule TorCell.RelayCell.Extend2.Spec do
     {%TorCell.RelayCell.Extend2.Spec{lstype: lstype, lspec: lspec}, remaining}
   end
 
-  @spec encode(TorCell.RelayCell.Extend2.Spec) :: binary()
+  @spec encode(t()) :: binary()
   def encode(spec) do
     encoded = encode_lspec(spec.lstype, spec.lspec)
     encode_lstype(spec.lstype) <> <<byte_size(encoded)>> <> encoded

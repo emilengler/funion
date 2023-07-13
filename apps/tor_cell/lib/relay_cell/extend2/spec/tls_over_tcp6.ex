@@ -7,7 +7,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.TlsOverTcp6 do
 
   @type t :: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{ip: tuple(), port: integer()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Extend2.Spec.TlsOverTcp6
+  @spec decode(binary()) :: t()
   def decode(spec) do
     remaining = spec
     <<ip::binary-size(16), remaining::binary>> = remaining
@@ -17,7 +17,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.TlsOverTcp6 do
     %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{ip: ip, port: port}
   end
 
-  @spec encode(TorCell.RelayCell.Extend2.Spec.TlsOverTcp6) :: binary()
+  @spec encode(t()) :: binary()
   def encode(spec) do
     :binary.list_to_bin(Tuple.to_list(spec.ip)) <> <<spec.port::16>>
   end

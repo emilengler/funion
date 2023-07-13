@@ -6,13 +6,13 @@ defmodule TorCell.RelayEarly do
 
   @type t :: %TorCell.RelayEarly{onion_skin: binary()}
 
-  @spec decode(binary()) :: TorCell.RelayEarly
+  @spec decode(binary()) :: t()
   def decode(payload) do
     <<onion_skin::binary-size(509)>> = payload
     %TorCell.RelayEarly{onion_skin: onion_skin}
   end
 
-  @spec encode(TorCell.RelayEarly) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<cell.onion_skin::binary-size(509)>>
   end

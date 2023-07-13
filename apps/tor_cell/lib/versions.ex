@@ -6,7 +6,7 @@ defmodule TorCell.Versions do
 
   @type t :: %TorCell.Versions{versions: list()}
 
-  @spec decode(binary()) :: TorCell.Versions
+  @spec decode(binary()) :: t()
   def decode(payload) do
     %TorCell.Versions{
       versions:
@@ -17,7 +17,7 @@ defmodule TorCell.Versions do
     }
   end
 
-  @spec encode(TorCell.Versions) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     Enum.join(Enum.map(cell.versions, fn z -> <<z::16>> end))
   end

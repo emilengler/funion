@@ -7,9 +7,9 @@ defmodule TorCell.Authenticate do
 
   @type t :: %TorCell.Authenticate{auth_type: auth_type(), authentication: authentication()}
   @type auth_type :: :ed25519_sha256_rfc5705
-  @type authentication :: TorCell.Authenticate.Ed25519Sha256Rfc5705
+  @type authentication :: TorCell.Authenticate.Ed25519Sha256Rfc5705.t()
 
-  @spec decode(binary()) :: TorCell.Authenticate
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<3::16, remaining::binary>> = remaining
@@ -22,7 +22,7 @@ defmodule TorCell.Authenticate do
     }
   end
 
-  @spec encode(TorCell.Authenticate) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     :ed25519_sha256_rfc5705 = cell.auth_type
     authentication = TorCell.Authenticate.Ed25519Sha256Rfc5705.encode(cell.authentication)

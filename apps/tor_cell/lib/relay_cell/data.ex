@@ -6,12 +6,12 @@ defmodule TorCell.RelayCell.Data do
 
   @type t :: %TorCell.RelayCell.Data{data: binary()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Data
+  @spec decode(binary()) :: t()
   def decode(data) do
     %TorCell.RelayCell.Data{data: data}
   end
 
-  @spec encode(TorCell.RelayCell.Data) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     cell.data
   end

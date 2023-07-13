@@ -19,7 +19,7 @@ defmodule TorCell.Destroy do
           | :timeout
           | :destroyed
 
-  @spec decode(binary()) :: TorCell.Destroy
+  @spec decode(binary()) :: t()
   def decode(payload) do
     <<reason, _::binary-size(508)>> = payload
 
@@ -42,7 +42,7 @@ defmodule TorCell.Destroy do
     %TorCell.Destroy{reason: reason}
   end
 
-  @spec encode(TorCell.Destroy) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     reason =
       case cell.reason do

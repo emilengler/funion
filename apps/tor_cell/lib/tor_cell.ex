@@ -25,18 +25,18 @@ defmodule TorCell do
           | :auth_challenge
           | :authenticate
   @type payload ::
-          TorCell.Padding
-          | TorCell.Relay
-          | TorCell.Destroy
-          | TorCell.Versions
-          | TorCell.Netinfo
-          | TorCell.RelayEarly
-          | TorCell.Create2
-          | TorCell.Created2
-          | TorCell.Vpadding
-          | TorCell.Certs
-          | TorCell.AuthChallenge
-          | TorCell.Authenticate
+          TorCell.Padding.t()
+          | TorCell.Relay.t()
+          | TorCell.Destroy.t()
+          | TorCell.Versions.t()
+          | TorCell.Netinfo.t()
+          | TorCell.RelayEarly.t()
+          | TorCell.Create2.t()
+          | TorCell.Created2.t()
+          | TorCell.Vpadding.t()
+          | TorCell.Certs.t()
+          | TorCell.AuthChallenge.t()
+          | TorCell.Authenticate.t()
 
   @spec fetch_circ_id(binary(), integer()) :: {circ_id(), binary()}
   defp fetch_circ_id(data, circ_id_len) do
@@ -162,7 +162,7 @@ defmodule TorCell do
 
   Returns the decoded cell alongside a binary with the remaining data
   """
-  @spec fetch(binary(), integer()) :: {TorCell, binary()}
+  @spec fetch(binary(), integer()) :: {t(), binary()}
   def fetch(data, circ_id_len \\ 4) do
     remaining = data
     {circ_id, remaining} = fetch_circ_id(remaining, circ_id_len)
@@ -182,7 +182,7 @@ defmodule TorCell do
   @doc """
   Encodes a TorCell into a binary.
   """
-  @spec encode(TorCell, integer()) :: binary()
+  @spec encode(t(), integer()) :: binary()
   def encode(cell, circ_id_len \\ 4) do
     encode_circ_id(cell.circ_id, circ_id_len) <>
       encode_cmd(cell.cmd) <>

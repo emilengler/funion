@@ -10,12 +10,12 @@ defmodule TorCell.RelayCell do
   @type cmd :: :begin | :data | :end | :connected | :extend2 | :extended2
   @type stream_id :: integer()
   @type data ::
-          TorCell.RelayCell.Begin
-          | TorCell.RelayCell.Data
-          | TorCell.RelayCell.End
-          | TorCell.RelayCell.Connected
-          | TorCell.RelayCell.Extend2
-          | TorCell.RelayCell.Extended2
+          TorCell.RelayCell.Begin.t()
+          | TorCell.RelayCell.Data.t()
+          | TorCell.RelayCell.End.t()
+          | TorCell.RelayCell.Connected.t()
+          | TorCell.RelayCell.Extend2.t()
+          | TorCell.RelayCell.Extended2.t()
 
   # TODO: Move those into TorCrypto
   @type onion_skin :: binary()
@@ -82,8 +82,7 @@ defmodule TorCell.RelayCell do
     end
   end
 
-  @spec decode(onion_skin(), digest()) ::
-          {boolean(), TorCell.RelayCell | onion_skin(), digest()}
+  @spec decode(onion_skin(), digest()) :: {boolean(), t() | onion_skin(), digest()}
   defp decode(payload, digest) do
     remaining = payload
     <<cmd, remaining::binary>> = remaining
@@ -108,7 +107,7 @@ defmodule TorCell.RelayCell do
     end
   end
 
-  @spec encrypt(TorCell.RelayCell, keys(), digest()) :: {onion_skin(), digest()}
+  @spec encrypt(t(), keys(), digest()) :: {onion_skin(), digest()}
   defp encode(cell, digest) do
     encoded_data = encode_data(cell.cmd, cell.data)
     padding_len = 509 - 11 - byte_size(encoded_data)
@@ -132,8 +131,7 @@ defmodule TorCell.RelayCell do
   If not all onion skins could be removed, it will return {false, new_payload, digest},
   with as much onion skins removed as possible.
   """
-  @spec decrypt(onion_skin(), keys(), digest()) ::
-          {boolean(), TorCell.RelayCell | onion_skin(), digest()}
+  @spec decrypt(onion_skin(), keys(), digest()) :: {boolean(), t() | onion_skin(), digest()}
   def decrypt(onion_skin, keys, digest) do
     decode(TorCrypto.OnionSkin.decrypt(keys, onion_skin), digest)
   end
@@ -143,7 +141,7 @@ defmodule TorCell.RelayCell do
 
   Returns the onion skin with the updated digest.
   """
-  @spec encrypt(TorCell.RelayCell, keys(), digest()) :: {onion_skin(), digest()}
+  @spec encrypt(t(), keys(), digest()) :: {onion_skin(), digest()}
   def encrypt(cell, keys, digest) do
     {encoded, digest} = encode(cell, digest)
     {TorCrypto.OnionSkin.encrypt(keys, encoded), digest}

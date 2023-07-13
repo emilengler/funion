@@ -6,7 +6,7 @@ defmodule TorCell.RelayCell.Extended2 do
 
   @type t :: %TorCell.RelayCell.Extended2{hdata: binary()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Extended2
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<hlen::16, remaining::binary>> = remaining
@@ -15,7 +15,7 @@ defmodule TorCell.RelayCell.Extended2 do
     %TorCell.RelayCell.Extended2{hdata: hdata}
   end
 
-  @spec encode(TorCell.RelayCell.Extended2) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<byte_size(cell.hdata)::16>> <> cell.hdata
   end

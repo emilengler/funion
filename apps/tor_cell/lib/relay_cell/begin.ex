@@ -7,7 +7,7 @@ defmodule TorCell.RelayCell.Begin do
 
   @type t :: %TorCell.RelayCell.Begin{host: String.t(), port: integer()}
 
-  @spec decode(binary()) :: TorCell.RelayCell.Begin
+  @spec decode(binary()) :: t()
   def decode(data) do
     [addrport, <<_::32>>] = :binary.split(data, <<0>>)
 
@@ -18,7 +18,7 @@ defmodule TorCell.RelayCell.Begin do
     %TorCell.RelayCell.Begin{host: host, port: port}
   end
 
-  @spec encode(TorCell.RelayCell.Begin) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     # Currently, the flags are static: IPv6 okay and IPv6 preferred
     flags = 5

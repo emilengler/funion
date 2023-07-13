@@ -6,7 +6,7 @@ defmodule TorCell.Certs do
 
   @type t :: %TorCell.Certs{certs: certs()}
   @type certs :: list(cert())
-  @type cert :: TorCell.Certs.Cert
+  @type cert :: TorCell.Certs.Cert.t()
 
   @spec decode_certs(binary(), integer(), certs()) :: certs()
   defp decode_certs(payload, n, certs) when n > 0 do
@@ -19,14 +19,14 @@ defmodule TorCell.Certs do
     certs
   end
 
-  @spec decode(binary()) :: TorCell.Certs
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<n, remaining::binary>> = remaining
     %TorCell.Certs{certs: decode_certs(remaining, n, [])}
   end
 
-  @spec encode(TorCell.Certs) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<length(cell.certs)>> <>
       Enum.join(Enum.map(cell.certs, fn x -> TorCell.Certs.Cert.encode(x) end))

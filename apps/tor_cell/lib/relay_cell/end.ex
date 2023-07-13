@@ -60,7 +60,7 @@ defmodule TorCell.RelayCell.End do
     end
   end
 
-  @spec decode(binary()) :: TorCell.RelayCell.End
+  @spec decode(binary()) :: t()
   def decode(data) do
     <<reason, _::binary>> = data
     reason = decode_reason(reason)
@@ -69,7 +69,7 @@ defmodule TorCell.RelayCell.End do
     %TorCell.RelayCell.End{reason: reason}
   end
 
-  @spec encode(TorCell.RelayCell.End) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     encode_reason(cell.reason)
   end

@@ -8,7 +8,7 @@ defmodule TorCell.RelayCell.Extend2 do
 
   @type t :: %TorCell.RelayCell.Extend2{specs: specs(), htype: htype(), hdata: binary()}
   @type specs :: list(spec())
-  @type spec :: TorCell.RelayCell.Extend2.Spec
+  @type spec :: TorCell.RelayCell.Extend2.Spec.t()
 
   @type htype :: :ntor
 
@@ -23,7 +23,7 @@ defmodule TorCell.RelayCell.Extend2 do
     {specs, remaining}
   end
 
-  @spec decode(binary()) :: TorCell.RelayCell.Extend2
+  @spec decode(binary()) :: t()
   def decode(data) do
     remaining = data
     <<nspec, remaining::binary>> = remaining
@@ -35,7 +35,7 @@ defmodule TorCell.RelayCell.Extend2 do
     %TorCell.RelayCell.Extend2{specs: specs, htype: :ntor, hdata: hdata}
   end
 
-  @spec encode(TorCell.RelayCell.Extend2) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<length(cell.specs)>> <>
       Enum.join(Enum.map(cell.specs, fn x -> TorCell.RelayCell.Extend2.Spec.encode(x) end)) <>

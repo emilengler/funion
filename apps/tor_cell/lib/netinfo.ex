@@ -42,7 +42,7 @@ defmodule TorCell.Netinfo do
     <<atype, tuple_size(addr)>> <> :binary.list_to_bin(Tuple.to_list(addr))
   end
 
-  @spec decode(binary()) :: TorCell.Netinfo
+  @spec decode(binary()) :: t()
   def decode(payload) do
     remaining = payload
     <<time::32, remaining::binary>> = remaining
@@ -54,7 +54,7 @@ defmodule TorCell.Netinfo do
     %TorCell.Netinfo{time: time, otheraddr: otheraddr, myaddrs: myaddrs}
   end
 
-  @spec encode(TorCell.Netinfo) :: binary()
+  @spec encode(t()) :: binary()
   def encode(cell) do
     <<DateTime.to_unix(cell.time)::32>> <>
       encode_addr(cell.otheraddr) <>
