@@ -20,7 +20,7 @@ defmodule TorCell.RelayCell do
   # TODO: Move those into TorCrypto
   @type onion_skin :: binary()
   @type keys :: [:crypto.crypto_state()]
-  @type digest :: :crypto.hash_state()
+  @type digest :: TorCrypto.Digest.t()
 
   @spec modify_digest(binary(), binary()) :: binary()
   defp modify_digest(data, digest) do

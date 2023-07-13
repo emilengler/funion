@@ -4,31 +4,32 @@ defmodule TorCrypto.Digest do
   @moduledoc """
   Implements the running digest in a stateful fashion.
   """
+  defstruct state: nil
+
+  @type t :: %TorCrypto.Digest{state: :crypto.hash_state()}
 
   @doc """
-  Initializes the context required for calculating the running digest.
-
-  Returns the internal representation of the context.
+  Initializes the digest using a seed.
   """
+  @spec init(binary()) :: t()
   def init(seed) do
-    update(:crypto.hash_init(:sha), seed)
+    update(%TorCrypto.Digest{state: :crypto.hash_init(:sha)}, seed)
   end
 
   @doc """
-  Updates the context with new data.
+  Updates the digest with new data.
 
-  Returns a new internal representation of the context, obsoleting the previous.
+  Returns the updated digest, obsoleting the old one.
   """
-  def update(context, data) do
-    :crypto.hash_update(context, data)
+  @spec update(t(), binary()) :: t()
+  def update(digest, data) do
+    %TorCrypto.Digest{state: :crypto.hash_update(digest.state, data)}
   end
 
   @doc """
-  Calculates the actual digest of the context.
-
-  Returns a binary corresponding to the current digest of the context.
+  Returns a binary corresponding to the current SHA-1 hash of the digest.
   """
-  def calculate(context) do
-    :crypto.hash_final(context)
+  def calculate(digest) do
+    :crypto.hash_final(digest.state)
   end
 end
