@@ -6,9 +6,10 @@ defmodule TorCell.Netinfo do
             otheraddr: nil,
             myaddrs: nil
 
-  @type t :: %TorCell.Netinfo{time: DateTime.t(), otheraddr: tuple(), myaddrs: list()}
+  @type t :: %TorCell.Netinfo{time: DateTime.t(), otheraddr: addr(), myaddrs: list(addr())}
+  @type addr :: :inet.ip_address()
 
-  @spec fetch_addr(binary()) :: tuple()
+  @spec fetch_addr(binary()) :: {addr(), binary()}
   defp fetch_addr(payload) do
     remaining = payload
     <<atype, remaining::binary>> = remaining
@@ -20,18 +21,18 @@ defmodule TorCell.Netinfo do
     {List.to_tuple(:binary.bin_to_list(aval)), remaining}
   end
 
-  @spec fetch_myaddrs(binary(), integer(), list()) :: {list(), binary()}
+  @spec fetch_myaddrs(binary(), integer(), list(addr())) :: {list(addr()), binary()}
   defp fetch_myaddrs(payload, nmyaddrs, addrs) when nmyaddrs > 0 do
     {addr, remaining} = fetch_addr(payload)
     fetch_myaddrs(remaining, nmyaddrs - 1, addrs ++ [addr])
   end
 
-  @spec fetch_myaddrs(binary(), integer(), list()) :: {list(), binary()}
+  @spec fetch_myaddrs(binary(), integer(), list(addr())) :: {list(addr()), binary()}
   defp fetch_myaddrs(payload, _, addrs) do
     {addrs, payload}
   end
 
-  @spec encode_addr(tuple()) :: binary()
+  @spec encode_addr(addr()) :: binary()
   defp encode_addr(addr) do
     atype =
       case tuple_size(addr) do
