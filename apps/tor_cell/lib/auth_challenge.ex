@@ -5,7 +5,9 @@ defmodule TorCell.AuthChallenge do
   defstruct challenge: nil,
             methods: nil
 
-  @type t :: %TorCell.AuthChallenge{challenge: binary(), methods: list()}
+  @type t :: %TorCell.AuthChallenge{challenge: binary(), methods: methods()}
+  @type methods() :: list(method())
+  @type method() :: :rsa_sha256_tlssecret | :ed25519_sha256_rfc5705
 
   @spec decode(binary()) :: t()
   def decode(payload) do
