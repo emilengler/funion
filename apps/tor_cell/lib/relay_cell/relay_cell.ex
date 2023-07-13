@@ -107,7 +107,7 @@ defmodule TorCell.RelayCell do
     end
   end
 
-  @spec encode(t(), keys(), digest()) :: {onion_skin(), digest()}
+  @spec encode(t(), digest()) :: {onion_skin(), digest()}
   defp encode(cell, digest) do
     encoded_data = encode_data(cell.cmd, cell.data)
     padding_len = 509 - 11 - byte_size(encoded_data)
