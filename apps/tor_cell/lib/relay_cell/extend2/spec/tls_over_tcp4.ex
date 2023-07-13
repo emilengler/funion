@@ -6,6 +6,7 @@ defmodule TorCell.RelayCell.Extend2.Spec.TlsOverTcp4 do
             port: nil
 
   @type t :: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp4{ip: tuple(), port: integer()}
+  @type addr :: :inet.ip_address()
 
   @spec decode(binary()) :: t()
   def decode(spec) do
