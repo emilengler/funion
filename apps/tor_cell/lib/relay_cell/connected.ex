@@ -5,7 +5,8 @@ defmodule TorCell.RelayCell.Connected do
   defstruct ip: nil,
             ttl: nil
 
-  @type t :: %TorCell.RelayCell.Connected{ip: tuple(), ttl: integer()}
+  @type t :: %TorCell.RelayCell.Connected{ip: addr(), ttl: integer()}
+  @type addr :: :inet.ip_address()
 
   @spec decode_v4(binary()) :: t()
   defp decode_v4(data) do
