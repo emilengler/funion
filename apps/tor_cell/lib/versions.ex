@@ -4,7 +4,7 @@ defmodule TorCell.Versions do
   @enforce_keys [:versions]
   defstruct versions: nil
 
-  @type t :: %TorCell.Versions{versions: list()}
+  @type t :: %TorCell.Versions{versions: list(integer())}
 
   @spec decode(binary()) :: t()
   def decode(payload) do
