@@ -28,6 +28,7 @@ defmodule TorCrypto.Digest do
   @doc """
   Returns a binary corresponding to the current SHA-1 hash of the digest.
   """
+  @spec calculate(t()) :: binary()
   def calculate(digest) do
     :crypto.hash_final(digest)
   end
