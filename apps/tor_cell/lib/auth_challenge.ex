@@ -7,7 +7,7 @@ defmodule TorCell.AuthChallenge do
 
   @type t :: %TorCell.AuthChallenge{challenge: binary(), methods: methods()}
   @type methods() :: list(method())
-  @type method() :: :rsa_sha256_tlssecret | :ed25519_sha256_rfc5705
+  @type method() :: :ed25519_sha256_rfc5705
 
   @spec decode(binary()) :: t()
   def decode(payload) do
@@ -23,7 +23,6 @@ defmodule TorCell.AuthChallenge do
         <<method::16>> = :binary.list_to_bin(bytes)
 
         case method do
-          1 -> :rsa_sha256_tlssecret
           3 -> :ed25519_sha256_rfc5705
         end
       end)
@@ -37,7 +36,6 @@ defmodule TorCell.AuthChallenge do
       Enum.join(
         Enum.map(cell.methods, fn method ->
           case method do
-            :rsa_sha256_tlssecret -> <<1::16>>
             :ed25519_sha256_rfc5705 -> <<3::16>>
           end
         end)
