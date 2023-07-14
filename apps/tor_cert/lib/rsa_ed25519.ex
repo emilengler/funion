@@ -47,30 +47,6 @@ defmodule TorCert.RsaEd25519 do
   end
 
   @doc """
-  Fetches the first RSA->Ed25519 cross-certificate in a binary.
-
-  Returns the internal representation of the found certificate, alongside
-  the remaining data.
-  """
-  @spec fetch(binary()) :: {t(), binary()}
-  def fetch(data) do
-    <<ed25519_key::binary-size(32), data::binary>> = data
-    <<expiration_date::32, data::binary>> = data
-    expiration_date = decode_expiration_date(expiration_date)
-    <<siglen, data::binary>> = data
-    <<signature::binary-size(siglen), data::binary>> = data
-
-    {
-      %TorCert.RsaEd25519{
-        ed25519_key: ed25519_key,
-        expiration_date: expiration_date,
-        signature: signature
-      },
-      data
-    }
-  end
-
-  @doc """
   Encodes an RSA->Ed25519 cross-certificate into a binary.
 
   Returns a binary corresponding to the certificate.
