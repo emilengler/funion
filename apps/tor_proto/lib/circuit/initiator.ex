@@ -57,8 +57,8 @@ defmodule TorProto.Circuit.Initiator do
 
     {
       %{
-        kf: TorCrypto.OnionSkin.init(keys.kf, true),
-        kb: TorCrypto.OnionSkin.init(keys.kb, false),
+        kf: TorCrypto.OnionStream.init(keys.kf, true),
+        kb: TorCrypto.OnionStream.init(keys.kb, false),
         df: TorCrypto.Digest.init(keys.df),
         db: TorCrypto.Digest.init(keys.db)
       },

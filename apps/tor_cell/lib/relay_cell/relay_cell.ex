@@ -19,7 +19,7 @@ defmodule TorCell.RelayCell do
 
   # TODO: Move those into TorCrypto
   @type onion_skin :: binary()
-  @type keys :: [:crypto.crypto_state()]
+  @type streams :: list(TorCrypto.OnionStream.t())
   @type digest :: TorCrypto.Digest.t()
 
   @spec modify_digest(binary(), binary()) :: binary()
@@ -125,15 +125,15 @@ defmodule TorCell.RelayCell do
   end
 
   @doc """
-  Tries to decrypt an onion skin into a TorCell.RelayCell, by removing length(keys) layers.
+  Tries to decrypt an onion skin into a TorCell.RelayCell, by removing `length(streams)` layers.
 
-  On success, it will return {true, TorCell.RelayCell, new_digest}.
-  If not all onion skins could be removed, it will return {false, new_payload, digest},
+  On success, it will return `{true, TorCell.RelayCell, new_digest}`.
+  If not all onion skins could be removed, it will return `{false, new_payload, digest}`,
   with as much onion skins removed as possible.
   """
-  @spec decrypt(onion_skin(), keys(), digest()) :: {boolean(), t() | onion_skin(), digest()}
-  def decrypt(onion_skin, keys, digest) do
-    decode(TorCrypto.OnionSkin.decrypt(keys, onion_skin), digest)
+  @spec decrypt(onion_skin(), streams(), digest()) :: {boolean(), t() | onion_skin(), digest()}
+  def decrypt(onion_skin, streams, digest) do
+    decode(TorCrypto.OnionStream.decrypt(streams, onion_skin), digest)
   end
 
   @doc """
@@ -141,9 +141,9 @@ defmodule TorCell.RelayCell do
 
   Returns the onion skin with the updated digest.
   """
-  @spec encrypt(t(), keys(), digest()) :: {onion_skin(), digest()}
-  def encrypt(cell, keys, digest) do
+  @spec encrypt(t(), streams(), digest()) :: {onion_skin(), digest()}
+  def encrypt(cell, streams, digest) do
     {encoded, digest} = encode(cell, digest)
-    {TorCrypto.OnionSkin.encrypt(keys, encoded), digest}
+    {TorCrypto.OnionStream.encrypt(streams, encoded), digest}
   end
 end
