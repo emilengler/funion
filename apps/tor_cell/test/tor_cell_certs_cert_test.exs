@@ -51,7 +51,7 @@ defmodule TorCellCertsCertTest do
         114, 231, 206, 29, 192, 53, 144, 214, 70, 133, 170, 155, 176, 21, 31, 30, 86, 51, 140,
         142, 132, 60, 4>>
 
-    {raw_decoded, _} = TorCert.Ed25519.fetch(raw)
+    raw_decoded = TorCert.Ed25519.decode(raw)
 
     cert = <<4>> <> <<byte_size(raw)::16>> <> raw <> <<42, 69>>
 
@@ -73,7 +73,7 @@ defmodule TorCellCertsCertTest do
         221, 240, 140, 1, 167, 196, 28, 50, 185, 145, 227, 113, 232, 88, 1, 70, 72, 117, 232, 224,
         51, 40, 51, 130, 108, 58>>
 
-    {raw_decoded, _} = TorCert.RsaEd25519.fetch(raw)
+    raw_decoded = TorCert.RsaEd25519.decode(raw)
 
     cert = <<7>> <> <<byte_size(raw)::16>> <> raw <> <<42, 69>>
 

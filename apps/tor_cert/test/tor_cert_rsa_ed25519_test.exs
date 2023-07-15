@@ -16,24 +16,6 @@ defmodule TorCertRsaEd25519Test do
            }
   end
 
-  test "fetches a TorCert.RsaEd25519" do
-    data =
-      <<0::8*32>> <>
-        <<0::32>> <>
-        <<32>> <>
-        <<0::8*64>>
-
-    {cert, data} = TorCert.RsaEd25519.fetch(data)
-
-    assert cert == %TorCert.RsaEd25519{
-             ed25519_key: <<0::32*8>>,
-             expiration_date: DateTime.from_unix!(0),
-             signature: <<0::32*8>>
-           }
-
-    assert data == <<0::32*8>>
-  end
-
   test "encodes a TorCert.RsaEd25519" do
     cert = %TorCert.RsaEd25519{
       ed25519_key: <<0::32*8>>,
@@ -56,7 +38,7 @@ defmodule TorCertRsaEd25519Test do
         221, 240, 140, 1, 167, 196, 28, 50, 185, 145, 227, 113, 232, 88, 1, 70, 72, 117, 232, 224,
         51, 40, 51, 130, 108, 58>>
 
-    {cert, _} = TorCert.RsaEd25519.fetch(raw)
+    cert = TorCert.RsaEd25519.decode(raw)
 
     key = "-----BEGIN RSA PUBLIC KEY-----
 MIGJAoGBAOZmLLx5QsbIZcLtAFvqXeCUIhpyOxHnRvwYTFIihVRMx2DuZWT8Stds
