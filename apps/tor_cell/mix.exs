@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorCell.MixProject do
   use Mix.Project
 
