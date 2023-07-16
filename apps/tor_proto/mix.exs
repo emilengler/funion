@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: ISC
+
 defmodule TorProto.MixProject do
   use Mix.Project
 
