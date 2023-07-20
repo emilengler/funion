@@ -50,7 +50,7 @@ defmodule TorProto.TlsSocket.Client do
     connection = init_arg[:connection]
 
     {:ok, socket} = :ssl.connect(host, port, active: true)
-    Logger.debug("Created TLS connection to #{host}:#{port}")
+    Logger.debug("Created TLS connection")
 
     state = %{
       buf: nil,
