@@ -12,12 +12,10 @@ defmodule TorProto.TlsSocket.Client do
   Due to our usage of active TLS sockets, we cannot combine this
   alongside GenServer, unfortunately.
 
-  This TLS client operates on cell level.  Keep in mind that the
-  `circ_id_len` needs to be set to `4` if using a link protocol
-  version of 4 or newer.
-
   The `TorProto.TlsSocket.Client` process lives as a child of an
   accompanying `TorProto.Connection.Initiator` process.
+
+  TODO: Find a better solution for handling the circ id length.
   """
   require Logger
   use GenServer
@@ -28,7 +26,7 @@ defmodule TorProto.TlsSocket.Client do
   defp fetch_cells(buf, circ_id_len, cells \\ []) do
     try do
       {cell, buf} = TorCell.fetch(buf, circ_id_len)
-      fetch_cells(buf, circ_id_len, cells ++ [cell])
+      fetch_cells(buf, 4, cells ++ [cell])
     rescue
       MatchError -> {cells, buf}
     end
@@ -56,9 +54,10 @@ defmodule TorProto.TlsSocket.Client do
 
     state = %{
       buf: nil,
-      circ_id_len: 2,
       connection: connection,
       pool: TorProto.CellPool.init(),
+      recv_circ_id_len: 2,
+      send_circ_id_len: 2,
       socket: socket
     }
 
@@ -69,15 +68,9 @@ defmodule TorProto.TlsSocket.Client do
   def handle_call({:send_cell, cell}, from, state) do
     ^from = state[:connection]
 
-    :ok = :ssl.send(state[:socket], TorCell.encode(cell, state[:circ_id_len]))
+    :ok = :ssl.send(state[:socket], TorCell.encode(cell, state[:send_circ_id_len]))
 
-    {:reply, :ok, state}
-  end
-
-  @impl true
-  def handle_call({:set_circ_id_len, circ_id_len}, from, state) do
-    ^from = state[:connection]
-    state = Map.replace!(state, :circ_id_len, circ_id_len)
+    state = Map.replace!(state, :send_circ_id_len, 4)
     {:reply, :ok, state}
   end
 
@@ -98,13 +91,14 @@ defmodule TorProto.TlsSocket.Client do
       case msg do
         {:ssl, ^socket, data} ->
           state = Map.replace!(state, :buf, state[:buf] <> :binary.list_to_bin(data))
-          {cells, buf} = fetch_cells(state[:buf], state[:circ_id_len])
+          {cells, buf} = fetch_cells(state[:buf], state[:recv_circ_id_len])
 
           {pool, ids} = push_to_pool(state[:pool], state[:connection], cells, [])
           Enum.map(ids, fn id -> GenServer.cast(state[:connection], {:poll, id}) end)
 
           state = Map.replace!(state, :buf, buf)
           state = Map.replace!(state, :pool, pool)
+          state = Map.replace!(state, :recv_circ_id_len, 4)
 
           state
       end
