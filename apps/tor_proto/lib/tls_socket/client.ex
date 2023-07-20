@@ -53,7 +53,7 @@ defmodule TorProto.TlsSocket.Client do
     Logger.debug("Created TLS connection")
 
     state = %{
-      buf: nil,
+      buf: <<>>,
       connection: connection,
       pool: TorProto.CellPool.init(),
       recv_circ_id_len: 2,
