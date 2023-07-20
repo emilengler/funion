@@ -22,7 +22,7 @@ defmodule TorProto.TlsSocket.Client do
   require Logger
   use GenServer
 
-  @type init_arg() :: %{host: :ssl.host(), port: integer()}
+  @type init_arg() :: %{host: :ssl.host(), port: integer(), connection: pid()}
 
   @spec fetch_cells(binary(), integer(), list(TorCell.t())) :: {list(TorCell.t()), binary()}
   defp fetch_cells(buf, circ_id_len, cells \\ []) do
