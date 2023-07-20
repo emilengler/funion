@@ -22,6 +22,12 @@ defmodule TorProto.TlsSocket.Client do
 
   @type init_arg() :: %{host: :ssl.host(), port: integer(), connection: pid()}
 
+  @spec is_valid_from?(GenServer.from(), pid()) :: boolean()
+  defp is_valid_from?(from, pid) do
+    {from_pid, _} = from
+    from_pid == pid
+  end
+
   @spec fetch_cells(binary(), integer(), list(TorCell.t())) :: {list(TorCell.t()), binary()}
   defp fetch_cells(buf, circ_id_len, cells \\ []) do
     try do
@@ -66,7 +72,7 @@ defmodule TorProto.TlsSocket.Client do
 
   @impl true
   def handle_call({:send_cell, cell}, from, state) do
-    ^from = state[:connection]
+    true = is_valid_from?(from, state[:connection])
 
     :ok = :ssl.send(state[:socket], TorCell.encode(cell, state[:send_circ_id_len]))
 
@@ -76,7 +82,7 @@ defmodule TorProto.TlsSocket.Client do
 
   @impl true
   def handle_call({:take, id}, from, state) do
-    ^from = state[:connection]
+    true = is_valid_from?(from, state[:connection])
     {pool, cell} = TorProto.CellPool.take(state[:pool], from, id)
 
     state = Map.replace!(state, :pool, pool)
