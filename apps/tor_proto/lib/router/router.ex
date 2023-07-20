@@ -10,10 +10,10 @@ defmodule TorProto.Router do
             keys: nil
 
   @type t :: %TorProto.Router{
-          nickname: String.t(),
+          nickname: String.t() | nil,
           identity: binary(),
           ip4: :inet.ip4_address(),
-          ip6: :inet.ip6_address(),
+          ip6: :inet.ip6_address() | nil,
           orport: integer(),
           keys: TorProto.Router.Keys.t()
         }
