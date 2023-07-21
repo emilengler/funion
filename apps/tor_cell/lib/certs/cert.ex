@@ -12,7 +12,7 @@ defmodule TorCell.Certs.Cert do
           | :rsa_auth
           | :ed25519_id_signing
           | :ed25519_signing_link
-          | :ed25510_signing_auth
+          | :ed25519_signing_auth
           | :rsa_ed25519_cross_cert
   @type certificate :: binary() | TorCert.Ed25519.t() | TorCert.RsaEd25519.t()
 
