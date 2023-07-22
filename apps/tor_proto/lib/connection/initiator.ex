@@ -7,6 +7,18 @@ defmodule TorProto.Connection.Initiator do
   require Logger
   use GenServer
 
+  defp gen_circ_id(circuits) do
+    # Set the MSB to 1
+    circ_id = Bitwise.bor(2 ** 31, Enum.random(1..(2 ** 32 - 1)))
+
+    # Check if the circ_id already exists
+    if Map.get(circuits, circ_id) == nil do
+      circ_id
+    else
+      gen_circ_id(circuits)
+    end
+  end
+
   @spec valid_cert?(TorCell.Certs.Cert.t(), TorProto.Router.Keys.t()) :: boolean()
   defp valid_cert?(cert, keys) do
     case cert.cert_type do
@@ -31,6 +43,12 @@ defmodule TorProto.Connection.Initiator do
 
   defp valid_certs?(_, _) do
     true
+  end
+
+  @spec valid_send?(map(), GenServer.from(), TorCell.t()) :: boolean()
+  defp valid_send?(circuits, from, cell) do
+    {pid, _} = from
+    pid == Map.get(circuits, cell.circ_id)
   end
 
   @spec recv_cell(pid()) :: TorCell.t()
@@ -118,7 +136,69 @@ defmodule TorProto.Connection.Initiator do
     Logger.debug("Connection handshake finished")
     Logger.info("Successfully established a connection with #{router.nickname}")
 
-    state = %{}
+    state = %{
+      circuits: %{},
+      fifos: TorProto.PidFifos.init(),
+      router: router,
+      tls_socket: tls_socket
+    }
+
     {:ok, state}
+  end
+
+  @impl true
+  def handle_call(:create, _from, state) do
+    circ_id = gen_circ_id(state[:circuits])
+
+    {:ok, circuit} =
+      GenServer.start_link(TorProto.Circuit.Initiator, %{
+        circ_id: circ_id,
+        connection: self(),
+        router: state[:router]
+      })
+
+    state = Map.replace!(state, :circuits, Map.put(state[:circuits], circ_id, circuit))
+    {:reply, {:ok, circuit}, state}
+  end
+
+  @impl true
+  def handle_call(:dequeue, from, state) do
+    {pid, _} = from
+    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
+
+    state = Map.replace!(state, :fifos, fifos)
+    {:reply, {:ok, cell}, state}
+  end
+
+  @impl true
+  def handle_call({:send, cell}, from, state) do
+    # Ensure that circuit's cannot send on other circuit's behalfs
+    true = valid_send?(state[:circuits], from, cell)
+    send_cell(state[:tls_socket], cell)
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_cast(:poll, state) do
+    {:ok, cell} = GenServer.call(state[:tls_socket], :dequeue)
+
+    if cell == nil do
+      {:noreply, state}
+    else
+      if cell.circ_id == 0 do
+        {:noreply, state}
+      else
+        pid = Map.get(state[:circuits], cell.circ_id)
+
+        if pid == nil do
+          Logger.warn("Received cell with unknown circuit ID, ignoring")
+          {:noreply, state}
+        else
+          fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
+          state = Map.replace!(state, :fifos, fifos)
+          {:noreply, state}
+        end
+      end
+    end
   end
 end
