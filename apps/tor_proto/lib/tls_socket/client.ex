@@ -104,6 +104,7 @@ defmodule TorProto.TlsSocket.Client do
     cells = Enum.filter(cells, fn cell -> cell.cmd not in [:padding, :vpadding] end)
 
     fifos = enqueue_cells(state[:fifos], state[:connection], cells)
+    Enum.map(cells, fn _ -> GenServer.cast(state[:connection], :poll) end)
 
     state = Map.replace!(state, :buf, buf)
     state = Map.replace!(state, :fifos, fifos)
