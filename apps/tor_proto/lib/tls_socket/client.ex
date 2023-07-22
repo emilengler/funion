@@ -16,12 +16,7 @@ defmodule TorProto.TlsSocket.Client do
   use GenServer
 
   defp enqueue_cells(fifos, pid, cells) when length(cells) > 0 do
-    # Ignore PADDING and VPADDING cells
-    if hd(cells).cmd in [:padding, :vpadding] do
-      enqueue_cells(fifos, pid, tl(cells))
-    else
-      enqueue_cells(TorProto.PidFifos.enqueue(fifos, pid, hd(cells)), pid, tl(cells))
-    end
+    enqueue_cells(TorProto.PidFifos.enqueue(fifos, pid, hd(cells)), pid, tl(cells))
   end
 
   defp enqueue_cells(fifos, _, _) do
@@ -106,6 +101,7 @@ defmodule TorProto.TlsSocket.Client do
 
     buf = state[:buf] <> :binary.list_to_bin(data)
     {cells, buf, virginity} = fetch_cells(buf, state[:virginity])
+    cells = Enum.filter(cells, fn cell -> cell.cmd not in [:padding, :vpadding] end)
 
     fifos = enqueue_cells(state[:fifos], state[:connection], cells)
 
