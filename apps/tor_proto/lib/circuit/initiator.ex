@@ -49,6 +49,7 @@ defmodule TorProto.Circuit.Initiator do
 
     {
       %{
+        router: router,
         kf: TorCrypto.OnionStream.init(keys.kf, true),
         kb: TorCrypto.OnionStream.init(keys.kb, true),
         df: TorCrypto.Digest.init(keys.df),
@@ -167,13 +168,15 @@ defmodule TorProto.Circuit.Initiator do
     end
 
     {next_hop, df, db} = ntor(extend2, extended2, router, state[:connection])
-    Logger.info("Successfully extended circuit to #{router.nickname}")
 
     hop = List.last(state[:hops])
     hop = Map.replace!(hop, :df, df)
     hop = Map.replace!(hop, :db, db)
     state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
     state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
+
+    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
+    Logger.info("Successfully extended circuit to #{router.nickname} => #{inspect(nicks)}")
     {:reply, :ok, state}
   end
 
@@ -202,7 +205,8 @@ defmodule TorProto.Circuit.Initiator do
     {hop, nil, nil} = ntor(create2, created2, router, connection)
     Logger.debug("Circuit handshake finished")
 
-    Logger.info("Successfully established a circuit with #{router.nickname}")
+    nicks = [router.nickname]
+    Logger.info("Successfully established a circuit with #{router.nickname} => #{inspect(nicks)}")
 
     state = %{circ_id: circ_id, connection: connection, hops: [hop]}
     {:noreply, state}
