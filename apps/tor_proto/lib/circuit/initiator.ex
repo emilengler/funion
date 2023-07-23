@@ -92,6 +92,92 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
+  def handle_call({:extend, router}, _from, state) do
+    specs = [
+      %TorCell.RelayCell.Extend2.Spec{
+        lstype: :tls_over_tcp4,
+        lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp4{ip: router.ip4, port: router.orport}
+      },
+      %TorCell.RelayCell.Extend2.Spec{
+        lstype: :legacy_identity,
+        lspec: %TorCell.RelayCell.Extend2.Spec.LegacyIdentity{fingerprint: router.identity}
+      },
+      %TorCell.RelayCell.Extend2.Spec{
+        lstype: :ed25519_identity,
+        lspec: %TorCell.RelayCell.Extend2.Spec.Ed25519Identity{
+          fingerprint: router.keys.ed25519_identity
+        }
+      }
+    ]
+
+    specs =
+      if router.ip6 == nil do
+        specs
+      else
+        specs ++
+          [
+            %TorCell.RelayCell.Extend2.Spec{
+              lstype: :tls_over_tcp6,
+              lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{
+                ip: router.ip6,
+                port: router.orport
+              }
+            }
+          ]
+      end
+
+    extend2 = fn hdata ->
+      extend2 = %TorCell.RelayCell{
+        cmd: :extend2,
+        stream_id: 0,
+        data: %TorCell.RelayCell.Extend2{specs: specs, htype: :ntor, hdata: hdata}
+      }
+
+      df = List.last(state[:hops]).df
+      kfs = Enum.map(state[:hops], fn x -> x.kf end)
+      {os, df} = TorCell.RelayCell.encrypt(extend2, kfs, df)
+
+      {
+        %TorCell{
+          circ_id: state[:circ_id],
+          cmd: :relay_early,
+          payload: %TorCell.RelayEarly{onion_skin: os}
+        },
+        df
+      }
+    end
+
+    extended2 = fn extended2 ->
+      circ_id = state[:circ_id]
+
+      %TorCell{circ_id: ^circ_id, cmd: :relay, payload: %TorCell.Relay{onion_skin: os}} =
+        extended2
+
+      db = List.last(state[:hops]).db
+      kbs = Enum.map(state[:hops], fn x -> x.kb end)
+      {true, extended2, db} = TorCell.RelayCell.decrypt(os, kbs, db)
+
+      %TorCell.RelayCell{
+        cmd: :extended2,
+        stream_id: 0,
+        data: %TorCell.RelayCell.Extended2{hdata: hdata}
+      } = extended2
+
+      {hdata, db}
+    end
+
+    {next_hop, df, db} = ntor(extend2, extended2, router, state[:connection])
+    Logger.info("Successfully extended circuit to #{router.nickname}")
+
+    hop = List.last(state[:hops])
+    hop = Map.replace!(hop, :df, df)
+    hop = Map.replace!(hop, :db, db)
+    state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
+    state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
+    {:reply, :ok, state}
+  end
+
+  @impl true
   def handle_cast({:init, circ_id, connection, router}, state) do
     nil = state
 
