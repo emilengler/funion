@@ -112,4 +112,11 @@ defmodule TorProto.TlsSocket.Client do
 
     {:noreply, state}
   end
+
+  @impl true
+  def terminate(:normal, state) do
+    :ok = :ssl.close(state[:socket])
+    Logger.debug("Successfully destroyed TLS connection")
+    :normal
+  end
 end
