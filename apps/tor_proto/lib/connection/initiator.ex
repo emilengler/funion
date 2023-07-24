@@ -188,6 +188,7 @@ defmodule TorProto.Connection.Initiator do
     ^pid = Map.get(state[:circuits], circ_id)
 
     state = Map.replace!(state, :circuits, Map.delete(state[:circuits], circ_id))
+    state = Map.replace!(state, :fifos, TorProto.PidFifos.kill(state[:fifos], pid))
     {:reply, :ok, state}
   end
 

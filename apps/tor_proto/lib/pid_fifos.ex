@@ -53,4 +53,12 @@ defmodule TorProto.PidFifos do
 
     Map.put(fifos, pid, fifo)
   end
+
+  @doc """
+  Removes a a PID's FIFO entirely.
+  """
+  @spec kill(t(), pid()) :: t()
+  def kill(fifos, pid) do
+    Map.delete(fifos, pid)
+  end
 end

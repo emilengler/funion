@@ -46,4 +46,12 @@ defmodule TorProtoPidFifosTest do
     assert fifos == %{}
     assert cell == nil
   end
+
+  test "kills a TorProto.PidFifo" do
+    pid1 = spawn(fn -> nil end)
+    fifos = %{pid1 => {[2], [1]}}
+
+    fifos = TorProto.PidFifos.kill(fifos, pid1)
+    assert fifos == %{}
+  end
 end
