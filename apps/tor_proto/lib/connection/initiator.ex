@@ -172,6 +172,15 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
+  def handle_call({:end, circ_id}, from, state) do
+    {pid, _} = from
+    ^pid = Map.get(state[:circuits], circ_id)
+
+    state = Map.replace!(state, :circuits, Map.delete(state[:circuits], circ_id))
+    {:reply, :ok, state}
+  end
+
+  @impl true
   def handle_call({:send, cell}, from, state) do
     # Ensure that circuit's cannot send on other circuit's behalfs
     true = valid_send?(state[:circuits], from, cell)
