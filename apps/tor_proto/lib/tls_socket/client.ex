@@ -61,7 +61,7 @@ defmodule TorProto.TlsSocket.Client do
     # The PID of the TorProto.Connection.Initiator process
     connection = init_arg[:connection]
 
-    {:ok, socket} = :ssl.connect(host, port, active: true)
+    {:ok, socket} = :ssl.connect(host, port, [{:active, true}, {:verify, :verify_none}])
     Logger.debug("Created TLS connection with #{inspect(host)}:#{port}")
 
     state = %{
