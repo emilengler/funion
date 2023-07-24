@@ -7,6 +7,7 @@ defmodule TorProto.Connection.Initiator do
   require Logger
   use GenServer
 
+  @spec gen_circ_id(map()) :: integer()
   defp gen_circ_id(circuits) do
     # Set the MSB to 1
     circ_id = Bitwise.bor(2 ** 31, Enum.random(1..(2 ** 32 - 1)))
@@ -17,6 +18,16 @@ defmodule TorProto.Connection.Initiator do
     else
       gen_circ_id(circuits)
     end
+  end
+
+  @spec terminate_circuits(list(pid())) :: :ok
+  defp terminate_circuits(circuits) when length(circuits) > 0 do
+    GenServer.stop(hd(circuits), :brutal_kill)
+    terminate_circuits(tl(circuits))
+  end
+
+  defp terminate_circuits(_) do
+    :ok
   end
 
   @spec valid_cert?(TorCell.Certs.Cert.t(), TorProto.Router.Keys.t()) :: boolean()
@@ -210,5 +221,18 @@ defmodule TorProto.Connection.Initiator do
         end
       end
     end
+  end
+
+  @impl true
+  def terminate(:normal, state) do
+    terminate_circuits(state[:circuits])
+    Logger.debug("Successfully terminated all circuits")
+
+    GenServer.stop(state[:tls_socket])
+    Logger.debug("Successfully terminated the TLS client process")
+
+    router = state[:router]
+    Logger.info("Successfully terminated the connection to #{router.nickname}")
+    :normal
   end
 end
