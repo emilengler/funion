@@ -3,8 +3,8 @@
 
 SPDX="# SPDX-License-Identifier: ISC"
 
-elixir=( $(find apps/ -type f -name "*.ex*") )
-shell=( $(find maint/ -type f -name "*.sh") )
+elixir=( $(find apps -type f -name "*.ex*") )
+shell=( $(find maint -type f -name "*.sh") )
 
 exit_code=0
 
