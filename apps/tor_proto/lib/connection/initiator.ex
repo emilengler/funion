@@ -214,6 +214,9 @@ defmodule TorProto.Connection.Initiator do
           Logger.warn("Received cell with unknown circuit ID, ignoring")
           {:noreply, state}
         else
+          # Redirect the poll to the circuit
+          GenServer.cast(pid, :poll)
+
           fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
           state = Map.replace!(state, :fifos, fifos)
           {:noreply, state}
