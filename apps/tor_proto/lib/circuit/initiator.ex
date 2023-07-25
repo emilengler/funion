@@ -132,7 +132,7 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
-  def handle_call({:connect, host, port}, _from, state) do
+  def handle_call({:connect, receiver, host, port}, _from, state) do
     stream_id = gen_stream_id(state[:streams])
 
     {:ok, stream} =
@@ -140,6 +140,7 @@ defmodule TorProto.Circuit.Initiator do
         circuit: self(),
         host: host,
         port: port,
+        receiver: receiver,
         stream_id: stream_id
       })
 
