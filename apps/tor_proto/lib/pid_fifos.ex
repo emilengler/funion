@@ -17,7 +17,7 @@ defmodule TorProto.PidFifos do
   @doc """
   Dequeues a cell from the start of a PID's FIFO.
   """
-  @spec dequeue(t(), pid()) :: {t(), TorCell.t() | nil}
+  @spec dequeue(t(), pid()) :: {t(), TorCell.t() | TorCell.RelayCell.t() | nil}
   def dequeue(fifos, pid) do
     fifo = Map.get(fifos, pid)
 
@@ -40,7 +40,7 @@ defmodule TorProto.PidFifos do
   @doc """
   Enqueues a cell at the end of a PID's FIFO.
   """
-  @spec enqueue(t(), pid(), TorCell.t()) :: t()
+  @spec enqueue(t(), pid(), TorCell.t() | TorCell.RelayCell.t()) :: t()
   def enqueue(fifos, pid, cell) do
     fifo = Map.get(fifos, pid)
 
