@@ -205,23 +205,12 @@ defmodule TorProto.Connection.Initiator do
     if cell == nil do
       {:noreply, state}
     else
-      if cell.circ_id == 0 do
-        {:noreply, state}
-      else
-        pid = Map.get(state[:circuits], cell.circ_id)
+      pid = Map.get(state[:circuits], cell.circ_id)
+      true = pid != nil
 
-        if pid == nil do
-          Logger.warn("Received cell with unknown circuit ID, ignoring")
-          {:noreply, state}
-        else
-          # Redirect the poll to the circuit
-          GenServer.cast(pid, :poll)
-
-          fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
-          state = Map.replace!(state, :fifos, fifos)
-          {:noreply, state}
-        end
-      end
+      fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
+      state = Map.replace!(state, :fifos, fifos)
+      {:noreply, state}
     end
   end
 
