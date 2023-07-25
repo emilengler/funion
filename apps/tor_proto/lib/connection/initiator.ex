@@ -22,7 +22,7 @@ defmodule TorProto.Connection.Initiator do
 
   @spec terminate_circuits(list(pid())) :: :ok
   defp terminate_circuits(circuits) when length(circuits) > 0 do
-    GenServer.stop(hd(circuits), :brutal_kill)
+    GenServer.stop(hd(circuits))
     terminate_circuits(tl(circuits))
   end
 
@@ -153,7 +153,7 @@ defmodule TorProto.Connection.Initiator do
 
   @impl true
   def terminate(:normal, state) do
-    terminate_circuits(state[:circuits])
+    terminate_circuits(Map.values(state[:circuits]))
     Logger.debug("Successfully terminated all circuits")
 
     GenServer.stop(state[:tls_socket])
@@ -189,13 +189,13 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
-  def handle_call({:end, circ_id}, from, state) do
-    {pid, _} = from
-    ^pid = Map.get(state[:circuits], circ_id)
+  def handle_cast({:end, circ_id}, state) do
+    # TODO: Ensure that PID is correct
+    pid = Map.get(state[:circuits], circ_id)
 
     state = Map.replace!(state, :circuits, Map.delete(state[:circuits], circ_id))
     state = Map.replace!(state, :fifos, TorProto.PidFifos.kill(state[:fifos], pid))
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
   @impl true

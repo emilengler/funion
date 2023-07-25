@@ -100,8 +100,7 @@ defmodule TorProto.Circuit.Initiator do
     }
 
     send_cell(state[:connection], destroy)
-
-    :ok = GenServer.call(state[:connection], {:end, state[:circ_id]})
+    GenServer.cast(state[:connection], {:end, state[:circ_id]})
 
     nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
     Logger.info("Successfully destroyed circuit #{inspect(nicks)}")
