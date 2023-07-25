@@ -209,6 +209,8 @@ defmodule TorProto.Connection.Initiator do
       true = pid != nil
 
       fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
+      GenServer.cast(pid, :poll)
+
       state = Map.replace!(state, :fifos, fifos)
       {:noreply, state}
     end
