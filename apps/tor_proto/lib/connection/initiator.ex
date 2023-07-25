@@ -1,4 +1,4 @@
-# SPDX-License-Identifer: ISC
+# SPDX-License-Identifier: ISC
 
 defmodule TorProto.Connection.Initiator do
   @moduledoc """
