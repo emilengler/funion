@@ -11,10 +11,10 @@ defmodule TorProto.MixProject do
       config_path: "../../config/config.exs",
       deps_path: "../../deps",
       lockfile: "../../mix.lock",
-      elixir: "~> 1.13",
+      elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      licenses: ["ISC"]
+      license: ["ISC"]
     ]
   end
 
@@ -28,8 +28,7 @@ defmodule TorProto.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tor_cell, in_umbrella: true},
-      {:tor_crypto, in_umbrella: true}
+      {:tor_cell, in_umbrella: true}
     ]
   end
 end

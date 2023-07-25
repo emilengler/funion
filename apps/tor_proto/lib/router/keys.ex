@@ -8,4 +8,7 @@ defmodule TorProto.Router.Keys do
             ed25519_identity: nil,
             ed25519_signing: nil,
             ed25519_authentication: nil
+
+  # TODO: Fill this out (consider :crypto or :public_key)
+  @type t :: %TorProto.Router.Keys{}
 end
