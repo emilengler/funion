@@ -81,6 +81,13 @@ defmodule TorProto.TlsSocket.Client do
   end
 
   @impl true
+  def terminate(:normal, state) do
+    :ok = :ssl.close(state[:socket])
+    Logger.debug("Successfully destroyed TLS connection")
+    :normal
+  end
+
+  @impl true
   def handle_call({:send, cell}, _from, state) do
     :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
     {:reply, :ok, state}
@@ -111,12 +118,5 @@ defmodule TorProto.TlsSocket.Client do
     state = Map.replace!(state, :virginity, virginity)
 
     {:noreply, state}
-  end
-
-  @impl true
-  def terminate(:normal, state) do
-    :ok = :ssl.close(state[:socket])
-    Logger.debug("Successfully destroyed TLS connection")
-    :normal
   end
 end

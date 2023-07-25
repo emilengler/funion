@@ -159,6 +159,19 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
+  def terminate(:normal, state) do
+    terminate_circuits(state[:circuits])
+    Logger.debug("Successfully terminated all circuits")
+
+    GenServer.stop(state[:tls_socket])
+    Logger.debug("Successfully terminated the TLS client process")
+
+    router = state[:router]
+    Logger.info("Successfully terminated the connection to #{router.nickname}")
+    :normal
+  end
+
+  @impl true
   def handle_call(:create, _from, state) do
     circ_id = gen_circ_id(state[:circuits])
 
@@ -222,18 +235,5 @@ defmodule TorProto.Connection.Initiator do
         end
       end
     end
-  end
-
-  @impl true
-  def terminate(:normal, state) do
-    terminate_circuits(state[:circuits])
-    Logger.debug("Successfully terminated all circuits")
-
-    GenServer.stop(state[:tls_socket])
-    Logger.debug("Successfully terminated the TLS client process")
-
-    router = state[:router]
-    Logger.info("Successfully terminated the connection to #{router.nickname}")
-    :normal
   end
 end

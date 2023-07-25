@@ -93,6 +93,23 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
+  def terminate(:normal, state) do
+    destroy = %TorCell{
+      circ_id: state[:circ_id],
+      cmd: :destroy,
+      payload: %TorCell.Destroy{reason: :finished}
+    }
+
+    send_cell(state[:connection], destroy)
+
+    :ok = GenServer.call(state[:connection], {:end, state[:circ_id]})
+
+    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
+    Logger.info("Successfully destroyed circuit #{inspect(nicks)}")
+    :normal
+  end
+
+  @impl true
   def handle_call({:extend, router}, _from, state) do
     specs = [
       %TorCell.RelayCell.Extend2.Spec{
@@ -210,22 +227,5 @@ defmodule TorProto.Circuit.Initiator do
 
     state = %{circ_id: circ_id, connection: connection, hops: [hop]}
     {:noreply, state}
-  end
-
-  @impl true
-  def terminate(:normal, state) do
-    destroy = %TorCell{
-      circ_id: state[:circ_id],
-      cmd: :destroy,
-      payload: %TorCell.Destroy{reason: :finished}
-    }
-
-    send_cell(state[:connection], destroy)
-
-    :ok = GenServer.call(state[:connection], {:end, state[:circ_id]})
-
-    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
-    Logger.info("Successfully destroyed circuit #{inspect(nicks)}")
-    :normal
   end
 end
