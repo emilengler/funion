@@ -74,8 +74,7 @@ defmodule TorProto.Circuit.Initiator do
 
   @spec send_cell(pid(), TorCell.t()) :: :ok
   defp send_cell(connection, cell) do
-    :ok = GenServer.call(connection, {:send, cell})
-    :ok
+    GenServer.cast(connection, {:send, cell})
   end
 
   @impl true

@@ -57,12 +57,6 @@ defmodule TorProto.Connection.Initiator do
     true
   end
 
-  @spec valid_send?(map(), GenServer.from(), TorCell.t()) :: boolean()
-  defp valid_send?(circuits, from, cell) do
-    {pid, _} = from
-    pid == Map.get(circuits, cell.circ_id)
-  end
-
   @spec recv_cell(pid()) :: TorCell.t()
   defp recv_cell(tls_socket) do
     # TODO: Let :dequeue not return :ok if nil
@@ -77,8 +71,7 @@ defmodule TorProto.Connection.Initiator do
 
   @spec send_cell(pid(), TorCell.t()) :: :ok
   defp send_cell(tls_socket, cell) do
-    :ok = GenServer.call(tls_socket, {:send, cell})
-    :ok
+    GenServer.cast(tls_socket, {:send, cell})
   end
 
   @impl true
@@ -206,14 +199,6 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
-  def handle_call({:send, cell}, from, state) do
-    # Ensure that circuit's cannot send on other circuit's behalfs
-    true = valid_send?(state[:circuits], from, cell)
-    send_cell(state[:tls_socket], cell)
-    {:reply, :ok, state}
-  end
-
-  @impl true
   def handle_cast(:poll, state) do
     {:ok, cell} = GenServer.call(state[:tls_socket], :dequeue)
 
@@ -235,5 +220,12 @@ defmodule TorProto.Connection.Initiator do
         end
       end
     end
+  end
+
+  @impl true
+  def handle_cast({:send, cell}, state) do
+    # TODO: Ensure that circuit's cannot send on other circuit's behalfs
+    send_cell(state[:tls_socket], cell)
+    {:noreply, state}
   end
 end

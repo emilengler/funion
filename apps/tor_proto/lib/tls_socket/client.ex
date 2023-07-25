@@ -88,17 +88,17 @@ defmodule TorProto.TlsSocket.Client do
   end
 
   @impl true
-  def handle_call({:send, cell}, _from, state) do
-    :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
-    {:reply, :ok, state}
-  end
-
-  @impl true
   def handle_call(:dequeue, _from, state) do
     {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], state[:connection])
 
     state = Map.replace!(state, :fifos, fifos)
     {:reply, {:ok, cell}, state}
+  end
+
+  @impl true
+  def handle_cast({:send, cell}, state) do
+    :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
+    {:noreply, state}
   end
 
   @impl true
