@@ -100,7 +100,7 @@ defmodule TorCellCertsCertTest do
                 <<12, 21, 119, 119, 119, 46, 54, 111, 104, 98, 55, 99, 102, 55, 105, 101, 107,
                   112, 104, 46, 99, 111, 109>>}
              ]
-           ]}, {:Validity, {:utcTime, '230114000000Z'}, {:utcTime, '240114000000Z'}},
+           ]}, {:Validity, {:utcTime, ~c"230114000000Z"}, {:utcTime, ~c"240114000000Z"}},
           {:rdnSequence,
            [
              [
