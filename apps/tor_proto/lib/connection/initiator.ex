@@ -48,7 +48,7 @@ defmodule TorProto.Connection.Initiator do
     if valid_cert?(hd(certs), keys) do
       valid_certs?(tl(certs), keys)
     else
-      Logger.warn("Invalid certificate: #{inspect(hd(certs))}")
+      Logger.warning("Invalid certificate: #{inspect(hd(certs))}")
       false
     end
   end
