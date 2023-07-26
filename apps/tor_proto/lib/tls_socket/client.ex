@@ -15,6 +15,7 @@ defmodule TorProto.TlsSocket.Client do
   require Logger
   use GenServer
 
+  @spec enqueue_cells(TorProto.PidFifos.t(), pid(), list(TorCell.t())) :: TorProto.PidFifos.t()
   defp enqueue_cells(fifos, pid, cells) when length(cells) > 0 do
     enqueue_cells(TorProto.PidFifos.enqueue(fifos, pid, hd(cells)), pid, tl(cells))
   end
