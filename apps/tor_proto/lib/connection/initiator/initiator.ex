@@ -197,8 +197,52 @@ defmodule TorProto.Connection.Initiator do
 
   ## Client API
 
+  @doc """
+  Starts a connection to an onion router.
+
+  This function will spawn a new process and will return, once that process
+  has created the TLS connection and performed the in-protocol handshake.
+  """
+  @spec start_link(TorProto.Router.t()) :: :ok | {:error, term()}
+  def start_link(router) do
+    {:ok, server} = GenServer.start_link(__MODULE__, %{router: router})
+    {:ok, server}
+  end
+
+  @doc """
+  Terminates a connection, including all its associated circuits and streams.
+  """
+  @spec stop(t()) :: :ok | {:error, term()}
+  def stop(server) do
+    GenServer.stop(server)
+  end
+
+  @doc """
+  Creates a new circuit on the connection with a random circuit ID.
+  """
+  @spec create(t()) :: :ok | {:error, term()}
+  def create(server) do
+    GenServer.call(server, :create)
+  end
+
+  @doc """
+  Destroys a circuit.
+
+  This function can only be called from circuit processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec destroy(t(), TorCell.circ_id()) :: :ok | {:error, term()}
+  def destroy(server, circ_id) do
+    GenServer.call(server, {:destroy, circ_id})
+  end
+
+  @doc """
+  Tells the GenServer that a new cell is available from its satellite.
+
+  This function should only be called by the satellite process.
+  """
   @spec poll(t()) :: :ok | {:error, term()}
-  def poll(connection) do
-    :ok = GenServer.cast(connection, :poll)
+  def poll(server) do
+    :ok = GenServer.cast(server, :poll)
   end
 end
