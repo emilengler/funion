@@ -157,7 +157,7 @@ defmodule TorProto.Connection.Initiator do
     {pid, _} = from
 
     # If pid does not match the PID in circuits, then something fishy is going on
-    true = Map.get(state[:circuits], circ_id) == pid
+    true = Map.get(state[:circuits], state[:circ_id]) == pid
 
     {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
 
@@ -244,7 +244,7 @@ defmodule TorProto.Connection.Initiator do
   This function can only be called from circuit processes.
   A violation against this will result in a termination of the process.
   """
-  @spec dequeue(t()) :: {:ok, TorCell.t()} :: {:error, term()}
+  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, term()}
   def dequeue(server) do
     GenServer.call(server, :dequeue)
   end
