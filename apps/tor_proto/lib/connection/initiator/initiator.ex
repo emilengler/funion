@@ -153,6 +153,24 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
+  def handle_call(:dequeue, from, state) do
+    {pid, _} = from
+
+    # If pid does not match the PID in circuits, then something fishy is going on
+    true = Map.get(state[:circuits], circ_id) == pid
+
+    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
+
+    state = Map.replace!(state, :fifos, fifos)
+
+    if cell == nil do
+      {:reply, {:error, :empty}, state}
+    else
+      {:reply, {:ok, cell}, state}
+    end
+  end
+
+  @impl true
   def handle_call(:create, _from, state) do
     raise "TODO"
     {:reply, {:ok, nil}, state}
@@ -218,6 +236,17 @@ defmodule TorProto.Connection.Initiator do
   @spec stop(t()) :: :ok | {:error, term()}
   def stop(server) do
     GenServer.stop(server)
+  end
+
+  @doc """
+  Dequeues a cell from the FIFO.
+
+  This function can only be called from circuit processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec dequeue(t()) :: {:ok, TorCell.t()} :: {:error, term()}
+  def dequeue(server) do
+    GenServer.call(server, :dequeue)
   end
 
   @doc """
