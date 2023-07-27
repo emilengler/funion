@@ -114,13 +114,10 @@ defmodule TorProto.Connection.Initiator.Satellite do
   end
 
   @impl true
-  def handle_call({:send_cell, cell}, from, state) do
-    {pid, _} = from
+  def handle_cast({:send_cell, cell, pid}, state) do
     ^pid = state[:connection]
-
     :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
-
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
   @impl true
@@ -187,6 +184,6 @@ defmodule TorProto.Connection.Initiator.Satellite do
   """
   @spec send_cell(t(), TorCell.t()) :: :ok | {:error, term()}
   def send_cell(server, cell) do
-    GenServer.call(server, {:send_cell, cell})
+    GenServer.cast(server, {:send_cell, cell, self()})
   end
 end
