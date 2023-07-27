@@ -192,7 +192,10 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
-  def handle_cast(:poll, state) do
+  def handle_cast({:poll, pid}, state) do
+    # Only the satellite may poll
+    ^pid = state[:satellite]
+
     {res, cell} = TorProto.Connection.Initiator.Satellite.dequeue(state[:satellite])
 
     # TODO: Use a case statement here
@@ -281,11 +284,12 @@ defmodule TorProto.Connection.Initiator do
   @doc """
   Tells the GenServer that a new cell is available from its satellite.
 
-  This function should only be called by the satellite process.
+  This function can only be called by the satellite process.
+  A violation against this will result in a termination of the process.
   """
   @spec poll(t()) :: :ok | {:error, term()}
   def poll(server) do
-    GenServer.cast(server, :poll)
+    GenServer.cast(server, {:poll, pid})
   end
 
   @doc """
