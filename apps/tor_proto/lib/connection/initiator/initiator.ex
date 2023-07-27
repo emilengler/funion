@@ -30,8 +30,8 @@ defmodule TorProto.Connection.Initiator do
     end
   end
 
-  @spec send_cell(TorProto.Connection.Initiator.Satellite.t(), TorCell.t()) :: :ok
-  defp send_cell(satellite, cell) do
+  @spec sendcell(TorProto.Connection.Initiator.Satellite.t(), TorCell.t()) :: :ok
+  defp sendcell(satellite, cell) do
     :ok = TorProto.Connection.Initiator.Satellite.send_cell(satellite, cell)
   end
 
@@ -81,7 +81,7 @@ defmodule TorProto.Connection.Initiator do
     Logger.debug("Created connection satellite process #{inspect(satellite)}")
 
     :ok =
-      send_cell(satellite, %TorCell{
+      sendcell(satellite, %TorCell{
         circ_id: 0,
         cmd: :versions,
         payload: %TorCell.Versions{versions: [4]}
@@ -113,7 +113,7 @@ defmodule TorProto.Connection.Initiator do
     true = Enum.member?(netinfo.myaddrs, ip)
     Logger.debug("NETINFO cell is valid")
 
-    send_cell(satellite, %TorCell{
+    sendcell(satellite, %TorCell{
       circ_id: 0,
       cmd: :netinfo,
       payload: %TorCell.Netinfo{
@@ -216,6 +216,16 @@ defmodule TorProto.Connection.Initiator do
     end
   end
 
+  @impl true
+  def handle_cast({:send_cell, cell, pid}, state) do
+    # If pid does not match the PID in circuits, then something fishy is going on
+    true = Map.get(state[:circuits], cell.circ_id) == pid
+
+    :ok = sendcell(state[:satellite], cell)
+
+    {:noreply, state}
+  end
+
   ## Client API
 
   @doc """
@@ -275,6 +285,17 @@ defmodule TorProto.Connection.Initiator do
   """
   @spec poll(t()) :: :ok | {:error, term()}
   def poll(server) do
-    :ok = GenServer.cast(server, :poll)
+    GenServer.cast(server, :poll)
+  end
+
+  @doc """
+  Sends a cell out of the connection.
+
+  This function can only be called from circuit processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec send_cell(t(), TorCell.t()) :: :ok | {:error, term()}
+  def send_cell(server, cell) do
+    GenServer.cast(server, {:send_cell, cell, self()})
   end
 end
