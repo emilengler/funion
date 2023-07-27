@@ -77,8 +77,6 @@ defmodule TorProto.Connection.Initiator.Satellite do
     state = %{
       # The buffer of remaining data that cannot be parsed yet
       buf: <<>>,
-      # The circ_id => PID mapping of the satellite circuit processes
-      circuits: %{0 => connection},
       # The FIFO for the cells of the connection process
       fifos: TorProto.PidFifos.init(),
       # The PID of the parent process
@@ -118,13 +116,11 @@ defmodule TorProto.Connection.Initiator.Satellite do
   @impl true
   def handle_call({:send_cell, cell}, from, state) do
     {pid, _} = from
-
-    # If pid does not match the PID in circuits, then something fishy must be going on
-    true = Map.get(state[:circuits], cell.circ_id) == pid
+    ^pid = state[:connection]
 
     :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
 
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
   @impl true
