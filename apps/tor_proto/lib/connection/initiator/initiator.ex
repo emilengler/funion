@@ -289,7 +289,7 @@ defmodule TorProto.Connection.Initiator do
   """
   @spec poll(t()) :: :ok | {:error, term()}
   def poll(server) do
-    GenServer.cast(server, {:poll, pid})
+    GenServer.cast(server, {:poll, self()})
   end
 
   @doc """
