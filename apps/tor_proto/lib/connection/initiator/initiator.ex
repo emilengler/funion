@@ -12,6 +12,18 @@ defmodule TorProto.Connection.Initiator do
 
   ## Generic Functions
 
+  @spec gen_circ_id(map()) :: integer()
+  defp gen_circ_id(circuits) do
+    # Set the MSB to 1
+    circ_id = Bitwise.bor(2 ** 31, Enum.random(1..(2 ** 32 - 1)))
+
+    # TODO: Ensure that this does not run forever
+    case Map.get(circuits, circ_id) do
+      nil -> circ_id
+      _ -> gen_circ_id(circuits)
+    end
+  end
+
   @spec terminate_circuits(list(TorProto.Circuit.Initiator.t())) :: :ok
   defp terminate_circuits(circuits) when length(circuits) > 0 do
     :ok = TorProto.Circuit.Initiator.stop(hd(circuits))
@@ -174,8 +186,13 @@ defmodule TorProto.Connection.Initiator do
 
   @impl true
   def handle_call(:create, _from, state) do
-    raise "TODO"
-    {:reply, {:ok, nil}, state}
+    circ_id = gen_circ_id(state[:circuits])
+
+    {:ok, circuit} = TorProto.Circuit.Initiator.start_link(circ_id, self(), state[:router])
+    circuits = Map.put(state[:circuits], circ_id, circuit)
+
+    state = Map.replace!(state, :circuits, circuits)
+    {:reply, {:ok, circuit}, state}
   end
 
   @impl true
