@@ -130,6 +130,8 @@ defmodule TorProto.Connection.Initiator do
     state = %{
       # The circ_id => PID mapping of the circuit processes
       circuits: %{},
+      # The FIFOS for the circuit processes
+      fifos: TorProto.PidFifos.init(),
       # The router struct
       router: router,
       # The PID of the satellite process we've spawned above
