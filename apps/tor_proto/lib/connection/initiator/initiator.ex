@@ -177,10 +177,9 @@ defmodule TorProto.Connection.Initiator do
 
     state = Map.replace!(state, :fifos, fifos)
 
-    if cell == nil do
-      {:reply, {:error, :empty}, state}
-    else
-      {:reply, {:ok, cell}, state}
+    case cell do
+      nil -> {:reply, {:error, :empty}, state}
+      _ -> {:reply, {:ok, cell}, state}
     end
   end
 
@@ -215,26 +214,27 @@ defmodule TorProto.Connection.Initiator do
     # Only the satellite may poll
     ^pid = state[:satellite]
 
-    {res, cell} = TorProto.Connection.Initiator.Satellite.dequeue(state[:satellite])
-
-    # TODO: Use a case statement here
-    if res == :ok do
-      if cell.circ_id == 0 do
-        raise "TODO"
-      else
-        # Redirect the cell to the circuit
-        circuit = Map.get(state[:circuits], cell.circ_id)
-        # If there is no PID with that circuit ID, something is fishy
-        true = circuit != nil
-
-        fifos = TorProto.PidFifos.enqueue(state[:fifos], circuit, cell)
-        :ok = TorProto.Circuit.Initiator.poll(circuit)
-
-        state = Map.replace!(state, :fifos, fifos)
+    case TorProto.Connection.Initiator.Satellite.dequeue(state[:satellite]) do
+      {:error, :empty} ->
         {:noreply, state}
-      end
-    else
-      {:noreply, state}
+
+      {:ok, cell} ->
+        if cell.circ_id == 0 do
+          raise "TODO"
+        else
+          # Determine the circuit to redirect the cell to
+          circuit = Map.get(state[:circuits], cell.circ_id)
+          # If there is no PID with that circuit ID, something is fishy
+          true = circuit != nil
+
+          fifos = TorProto.PidFifos.enqueue(state[:fifos], circuit, cell)
+          :ok = TorProto.Circuit.Initiator.poll(circuit)
+
+          state = Map.replace!(state, :fifos, fifos)
+          {:noreply, state}
+        end
+
+        {:noreply, state}
     end
   end
 
