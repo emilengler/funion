@@ -34,11 +34,11 @@ defmodule TorProto.Connection.Initiator do
     :ok
   end
 
-  @spec recv_cell(TorProto.Connection.Initiator.Satellite.t()) :: TorCell.t()
-  defp recv_cell(satellite) do
+  @spec recvcell(TorProto.Connection.Initiator.Satellite.t()) :: TorCell.t()
+  defp recvcell(satellite) do
     case TorProto.Connection.Initiator.Satellite.dequeue(satellite) do
       {:ok, cell} -> cell
-      {:error, :empty} -> recv_cell(satellite)
+      {:error, :empty} -> recvcell(satellite)
     end
   end
 
@@ -99,7 +99,7 @@ defmodule TorProto.Connection.Initiator do
     })
 
     Logger.debug("Sent VERSIONS cell")
-    versions = recv_cell(satellite)
+    versions = recvcell(satellite)
 
     %TorCell{circ_id: 0, cmd: :versions, payload: %TorCell.Versions{versions: versions}} =
       versions
@@ -108,17 +108,17 @@ defmodule TorProto.Connection.Initiator do
     true = Enum.member?(versions, 4)
     Logger.debug("Using link protocol version 4")
 
-    certs = recv_cell(satellite)
+    certs = recvcell(satellite)
     %TorCell{circ_id: 0, cmd: :certs, payload: %TorCell.Certs{certs: certs}} = certs
     Logger.debug("Received CERTS cell")
     true = valid_certs?(certs, router.keys)
     Logger.debug("All certificates are valid")
 
-    auth_challenge = recv_cell(satellite)
+    auth_challenge = recvcell(satellite)
     %TorCell{circ_id: 0, cmd: :auth_challenge, payload: _} = auth_challenge
     Logger.debug("Received AUTH_CHALLENGE cell")
 
-    netinfo = recv_cell(satellite)
+    netinfo = recvcell(satellite)
     %TorCell{circ_id: 0, cmd: :netinfo, payload: netinfo} = netinfo
     Logger.debug("Received NETINFO cell")
     true = Enum.member?(netinfo.myaddrs, ip)

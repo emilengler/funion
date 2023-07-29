@@ -127,7 +127,7 @@ defmodule TorProto.Circuit.Initiator do
     sendcell(connection, cell)
     Logger.debug("Sent circuit handshake")
 
-    cell = recv_cell(connection)
+    cell = recvcell(connection)
 
     {hdata, hops} =
       if length(hops) == 0 do
@@ -185,11 +185,11 @@ defmodule TorProto.Circuit.Initiator do
     :ok
   end
 
-  @spec recv_cell(TorProto.Connection.Initiator.t()) :: TorCell.t()
-  defp recv_cell(connection) do
+  @spec recvcell(TorProto.Connection.Initiator.t()) :: TorCell.t()
+  defp recvcell(connection) do
     case TorProto.Connection.Initiator.dequeue(connection) do
       {:ok, cell} -> cell
-      {:error, :empty} -> recv_cell(connection)
+      {:error, :empty} -> recvcell(connection)
     end
   end
 
