@@ -359,7 +359,7 @@ defmodule TorProto.Circuit.Initiator do
   This function should only be called from the accompanying connection process.
   """
   @spec start_link(TorCell.circ_id(), TorProto.Connection.Initiator.t(), TorProto.Router.t()) ::
-          :ok | {:error, term()}
+          {:ok, t()} | {:error, term()}
   def start_link(circ_id, connection, router) do
     {:ok, circuit} =
       GenServer.start_link(__MODULE__, %{circ_id: circ_id, connection: connection, router: router})
