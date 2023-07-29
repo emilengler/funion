@@ -2,163 +2,51 @@
 
 defmodule TorProto.Circuit.Initiator do
   @moduledoc """
-  Implements a Tor circuit using GenServer.
+  Implements a circuit of the Tor protocol.
   """
+
+  @type t :: pid()
+
+  @type hop :: %{
+          router: TorProto.Router.t(),
+          kf: TorCrypto.OnionStream.t(),
+          kb: TorCrypto.OnionStream.t(),
+          df: TorCrypto.Digest.t(),
+          db: TorCrypto.Digest.t()
+        }
+  @type hops :: list(hop)
+
   require Logger
   use GenServer
 
-  @type create2 :: (binary() -> TorCell.t())
-  @type created2 :: (TorCell.t() -> binary())
+  ## Generic Functions
 
-  @spec gen_stream_id(map()) :: integer()
-  defp gen_stream_id(streams) do
-    stream_id = Enum.random(1..(2 ** 16 - 1))
+  @spec decrypt_relay_cell(binary(), hops()) :: {TorCell.RelayCell.t(), hops()}
+  defp decrypt_relay_cell(os, hops) do
+    hop = List.last(hops)
+    kbs = Enum.map(hops, fn x -> x.kb end)
+    {true, cell, db} = TorCell.RelayCell.decrypt(os, kbs, hop.db)
 
-    if Map.get(streams, stream_id) == nil do
-      stream_id
-    else
-      gen_stream_id(streams)
-    end
+    hop = Map.replace!(hop, :db, db)
+    hops = List.replace_at(hops, -1, hop)
+
+    {cell, hops}
   end
 
-  @spec ntor(create2(), created2(), TorProto.Router.t(), pid()) ::
-          {%{
-             kf: TorCrypto.OnionStream.t(),
-             kb: TorCrypto.OnionStream.t(),
-             df: TorCrypto.Digest.t(),
-             db: TorCrypto.Digest.t()
-           }, TorCrypto.Digest.t(), TorCrypto.Digest.t()}
-  defp ntor(create2, created2, router, connection) do
-    b = router.keys.x25519_ntor
-    id = router.identity
-    {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
+  @spec encrypt_relay_cell(TorCell.RelayCell.t(), hops()) :: {binary(), hops()}
+  defp encrypt_relay_cell(cell, hops) do
+    hop = List.last(hops)
+    kfs = Enum.map(hops, fn x -> x.kf end)
+    {os, df} = TorCell.RelayCell.encrypt(cell, kfs, hop.df)
 
-    # Create the CREATED2 cell
-    # The closure gets the handshake data of the ntor handshake and must
-    # return a TorCell alongside the updated forward digest.
-    {cell, df} = create2.(TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk))
-    send_cell(connection, cell)
-    Logger.debug("Sent circuit handshake")
+    hop = Map.replace!(hop, :df, df)
+    hops = List.replace_at(hops, -1, hop)
 
-    # The closure gets the CREATED2 cell and must returns its handshake
-    # data alongside the updated backward digest.
-    cell = recv_cell(connection)
-    {hdata, db} = created2.(cell)
-    Logger.debug("Received circuit handshake reply")
-
-    remaining = hdata
-    <<y::binary-size(32), remaining::binary>> = remaining
-    <<auth::binary-size(32), _::binary>> = remaining
-
-    # TODO: Check if Y is in G.
-    secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
-
-    true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
-    Logger.debug("Circuit handshake is valid")
-
-    keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
-
-    {
-      %{
-        router: router,
-        kf: TorCrypto.OnionStream.init(keys.kf, true),
-        kb: TorCrypto.OnionStream.init(keys.kb, true),
-        df: TorCrypto.Digest.init(keys.df),
-        db: TorCrypto.Digest.init(keys.db)
-      },
-      df,
-      db
-    }
+    {os, hops}
   end
 
-  @spec terminate_streams(list(pid())) :: :ok
-  defp terminate_streams(streams) when length(streams) > 0 do
-    GenServer.stop(hd(streams))
-    terminate_streams(tl(streams))
-  end
-
-  defp terminate_streams(_) do
-    :ok
-  end
-
-  @spec recv_cell(pid()) :: TorCell.t()
-  defp recv_cell(connection) do
-    # TODO: Let :dequeue not return :ok if nil
-    {:ok, cell} = GenServer.call(connection, :dequeue)
-
-    if cell == nil do
-      recv_cell(connection)
-    else
-      cell
-    end
-  end
-
-  @spec send_cell(pid(), TorCell.t()) :: :ok
-  defp send_cell(connection, cell) do
-    GenServer.cast(connection, {:send, cell})
-  end
-
-  @impl true
-  def init(init_args) do
-    circ_id = init_args[:circ_id]
-    connection = init_args[:connection]
-    router = init_args[:router]
-
-    # The initialization has to take place in an asynchronous fashion,
-    # because we need to interact with the connection process during
-    # our true initialization.
-    GenServer.cast(self(), {:init, circ_id, connection, router})
-
-    {:ok, nil}
-  end
-
-  @impl true
-  def terminate(:normal, state) do
-    terminate_streams(Map.values(state[:streams]))
-    Logger.debug("Successfully terminated all streams")
-
-    destroy = %TorCell{
-      circ_id: state[:circ_id],
-      cmd: :destroy,
-      payload: %TorCell.Destroy{reason: :finished}
-    }
-
-    send_cell(state[:connection], destroy)
-    GenServer.cast(state[:connection], {:end, state[:circ_id]})
-
-    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
-    Logger.info("Successfully destroyed circuit #{inspect(nicks)}")
-    :normal
-  end
-
-  @impl true
-  def handle_call({:connect, receiver, host, port}, _from, state) do
-    stream_id = gen_stream_id(state[:streams])
-
-    {:ok, stream} =
-      GenServer.start_link(TorProto.Stream.Initiator, %{
-        circuit: self(),
-        host: host,
-        port: port,
-        receiver: receiver,
-        stream_id: stream_id
-      })
-
-    state = Map.replace!(state, :streams, Map.put(state[:streams], stream_id, stream))
-    {:reply, {:ok, stream}, state}
-  end
-
-  @impl true
-  def handle_call(:dequeue, from, state) do
-    {pid, _} = from
-    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
-
-    state = Map.replace!(state, :fifos, fifos)
-    {:reply, {:ok, cell}, state}
-  end
-
-  @impl true
-  def handle_call({:extend, router}, _from, state) do
+  @spec gen_specs(TorProto.Router.t()) :: list(TorCell.RelayCell.Extend2.Spec.t())
+  defp gen_specs(router) do
     specs = [
       %TorCell.RelayCell.Extend2.Spec{
         lstype: :tls_over_tcp4,
@@ -176,118 +64,165 @@ defmodule TorProto.Circuit.Initiator do
       }
     ]
 
-    specs =
-      if router.ip6 == nil do
-        specs
+    ip6 = %TorCell.RelayCell.Extend2.Spec{
+      lstype: :tls_over_tcp6,
+      lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{
+        ip: router.ip6,
+        port: router.orport
+      }
+    }
+
+    if router.ip6 == nil do
+      specs
+    else
+      specs ++ [ip6]
+    end
+  end
+
+  @spec gen_stream_id(map()) :: TorCell.RelayCell.stream_id()
+  defp gen_stream_id(streams) do
+    stream_id = Enum.random(1..(2 ** 16 - 1))
+
+    # TODO: Ensure that this does not run forever
+    case Map.get(streams, stream_id) do
+      nil -> stream_id
+      _ -> gen_stream_id(streams)
+    end
+  end
+
+  @spec ntor(TorCell.circ_id(), TorProto.Connection.Initiator.t(), hops(), TorProto.Router.t()) ::
+          hops()
+  defp ntor(circ_id, connection, hops, router) do
+    b = router.keys.x25519_ntor
+    id = router.identity
+    {x_pk, x_sk} = TorCrypto.Handshake.Ntor.Client.stage1()
+
+    hdata = TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk)
+
+    {cell, hops} =
+      if length(hops) == 0 do
+        # Use CREATE2
+        {%TorCell{
+           circ_id: circ_id,
+           cmd: :create2,
+           payload: %TorCell.Create2{htype: :ntor, hdata: hdata}
+         }, []}
       else
-        specs ++
-          [
-            %TorCell.RelayCell.Extend2.Spec{
-              lstype: :tls_over_tcp6,
-              lspec: %TorCell.RelayCell.Extend2.Spec.TlsOverTcp6{
-                ip: router.ip6,
-                port: router.orport
-              }
-            }
-          ]
+        # Use RELAY_EXTEND2
+        cell = %TorCell.RelayCell{
+          cmd: :extend2,
+          stream_id: 0,
+          data: %TorCell.RelayCell.Extend2{specs: gen_specs(router), htype: :ntor, hdata: hdata}
+        }
+
+        {os, hops} = encrypt_relay_cell(cell, hops)
+
+        {%TorCell{
+           circ_id: circ_id,
+           cmd: :relay_early,
+           payload: %TorCell.RelayEarly{onion_skin: os}
+         }, hops}
       end
 
-    extend2 = fn hdata ->
-      extend2 = %TorCell.RelayCell{
-        cmd: :extend2,
-        stream_id: 0,
-        data: %TorCell.RelayCell.Extend2{specs: specs, htype: :ntor, hdata: hdata}
-      }
+    sendcell(connection, cell)
+    Logger.debug("Sent circuit handshake")
 
-      df = List.last(state[:hops]).df
-      kfs = Enum.map(state[:hops], fn x -> x.kf end)
-      {os, df} = TorCell.RelayCell.encrypt(extend2, kfs, df)
+    cell = recvcell(connection)
 
-      {
-        %TorCell{
-          circ_id: state[:circ_id],
-          cmd: :relay_early,
-          payload: %TorCell.RelayEarly{onion_skin: os}
-        },
-        df
-      }
-    end
+    {hdata, hops} =
+      if length(hops) == 0 do
+        %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{hdata: hdata}} =
+          cell
 
-    extended2 = fn extended2 ->
-      circ_id = state[:circ_id]
+        {hdata, []}
+      else
+        %TorCell{circ_id: ^circ_id, cmd: :relay, payload: %TorCell.Relay{onion_skin: os}} = cell
+        {cell, hops} = decrypt_relay_cell(os, hops)
 
-      %TorCell{circ_id: ^circ_id, cmd: :relay, payload: %TorCell.Relay{onion_skin: os}} =
-        extended2
+        %TorCell.RelayCell{
+          cmd: :extended2,
+          stream_id: 0,
+          data: %TorCell.RelayCell.Extended2{hdata: hdata}
+        } = cell
 
-      db = List.last(state[:hops]).db
-      kbs = Enum.map(state[:hops], fn x -> x.kb end)
-      {true, extended2, db} = TorCell.RelayCell.decrypt(os, kbs, db)
+        {hdata, hops}
+      end
 
-      %TorCell.RelayCell{
-        cmd: :extended2,
-        stream_id: 0,
-        data: %TorCell.RelayCell.Extended2{hdata: hdata}
-      } = extended2
+    Logger.debug("Received circuit handshake reply")
 
-      {hdata, db}
-    end
+    remaining = hdata
+    <<y::binary-size(32), remaining::binary>> = remaining
+    <<auth::binary-size(32), _::binary>> = remaining
 
-    {next_hop, df, db} = ntor(extend2, extended2, router, state[:connection])
+    # TODO: Check if Y is in G
+    secret_input = TorCrypto.Handshake.Ntor.Client.stage3(b, id, x_pk, x_sk, y)
 
-    hop = List.last(state[:hops])
-    hop = Map.replace!(hop, :df, df)
-    hop = Map.replace!(hop, :db, db)
-    state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
-    state = Map.replace!(state, :hops, state[:hops] ++ [next_hop])
+    true = TorCrypto.Handshake.Ntor.Client.is_valid?(secret_input, auth, b, id, x_pk, y)
+    Logger.debug("Circuit handshake is valid")
 
-    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
-    Logger.info("Successfully extended circuit to #{router.nickname} => #{inspect(nicks)}")
-    {:reply, :ok, state}
-  end
-
-  @impl true
-  def handle_cast({:end, stream_id}, state) do
-    # TODO: Ensure that PID is correct
-    pid = Map.get(state[:streams], stream_id)
-
-    state = Map.replace!(state, :streams, Map.delete(state[:streams], stream_id))
-    state = Map.replace!(state, :fifos, TorProto.PidFifos.kill(state[:fifos], pid))
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:init, circ_id, connection, router}, state) do
-    nil = state
-
-    create2 = fn hdata ->
-      {
-        %TorCell{
-          circ_id: circ_id,
-          cmd: :create2,
-          payload: %TorCell.Create2{htype: :ntor, hdata: hdata}
-        },
-        nil
-      }
-    end
-
-    created2 = fn created2 ->
-      %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{hdata: hdata}} =
-        created2
-
-      {hdata, nil}
-    end
-
-    {hop, nil, nil} = ntor(create2, created2, router, connection)
+    keys = TorCrypto.Handshake.Ntor.derive_keys(secret_input)
     Logger.debug("Circuit handshake finished")
+
+    hops ++
+      [
+        %{
+          router: router,
+          kf: TorCrypto.OnionStream.init(keys.kf, true),
+          kb: TorCrypto.OnionStream.init(keys.kb, false),
+          df: TorCrypto.Digest.init(keys.df),
+          db: TorCrypto.Digest.init(keys.db)
+        }
+      ]
+  end
+
+  @spec terminate_streams(list(TorProto.Stream.t())) :: :ok
+  defp terminate_streams(streams) when length(streams) > 0 do
+    TorProto.Stream.Initiator.stop(hd(streams))
+    terminate_streams(tl(streams))
+  end
+
+  defp terminate_streams(_) do
+    :ok
+  end
+
+  @spec recvcell(TorProto.Connection.Initiator.t()) :: TorCell.t()
+  defp recvcell(connection) do
+    case TorProto.Connection.Initiator.dequeue(connection) do
+      {:ok, cell} -> cell
+      {:error, :empty} -> recvcell(connection)
+    end
+  end
+
+  @spec sendcell(TorProto.Connection.Initiator.t(), TorCell.t()) :: :ok
+  defp sendcell(connection, cell) do
+    TorProto.Connection.Initiator.send_cell(connection, cell)
+  end
+
+  ## GenServer Callbacks
+
+  @impl true
+  def init(init_arg) do
+    {:ok, init_arg, {:continue, :create}}
+  end
+
+  @impl true
+  def handle_continue(:create, state) do
+    router = state[:router]
+    hops = ntor(state[:circ_id], state[:connection], [], router)
 
     nicks = [router.nickname]
     Logger.info("Successfully established a circuit with #{router.nickname} => #{inspect(nicks)}")
 
     state = %{
-      circ_id: circ_id,
-      connection: connection,
+      # The circuit ID assigned to us by the connection
+      circ_id: state[:circ_id],
+      # The PID of the connection process we are associated with
+      connection: state[:connection],
+      # The FIFOS for the stream processes
       fifos: TorProto.PidFifos.init(),
-      hops: [hop],
+      # The hops that our circuit is made of (contains the crypto keys)
+      hops: hops,
+      # The stream_id => PID mapping of the stream processes
       streams: %{}
     }
 
@@ -295,39 +230,114 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
-  def handle_cast(:poll, state) do
-    {:ok, cell} = GenServer.call(state[:connection], :dequeue)
+  def terminate(:normal, state) do
+    terminate_streams(Map.values(state[:streams]))
+    Logger.debug("Successfully terminated all streams")
 
-    if cell == nil do
-      {:noreply, state}
-    else
-      circ_id = state[:circ_id]
-      ^circ_id = cell.circ_id
+    destroy = %TorCell{
+      circ_id: state[:circ_id],
+      cmd: :destroy,
+      payload: %TorCell.Destroy{reason: :finished}
+    }
 
-      hop = List.last(state[:hops])
-      kbs = Enum.map(state[:hops], fn x -> x.kb end)
-      {true, cell, db} = TorCell.RelayCell.decrypt(cell.payload.onion_skin, kbs, hop.db)
-      hop = Map.replace!(hop, :db, db)
+    sendcell(state[:connection], destroy)
+    TorProto.Connection.Initiator.destroy(state[:connection], state[:circ_id])
 
-      pid = Map.get(state[:streams], cell.stream_id)
-      true = pid != nil
+    nicks = Enum.map(state[:hops], fn hop -> hop.router.nickname end)
+    Logger.info("Successfully destroyed circuit #{inspect(nicks)}")
+    :normal
+  end
 
-      fifos = TorProto.PidFifos.enqueue(state[:fifos], pid, cell)
-      GenServer.cast(pid, :poll)
+  @impl true
+  def handle_call(:dequeue, from, state) do
+    {pid, _} = from
 
-      state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
-      state = Map.replace!(state, :fifos, fifos)
-      {:noreply, state}
+    # If pid does not match the PID in streams, then something fishy is going on
+    true = Enum.member?(Map.values(state[:streams]), pid)
+
+    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
+
+    state = Map.replace!(state, :fifos, fifos)
+
+    case cell do
+      nil -> {:reply, {:error, :empty}, state}
+      _ -> {:reply, {:ok, cell}, state}
     end
   end
 
   @impl true
-  def handle_cast({:send, cell}, state) do
-    # TODO: Ensure that streams cannot send on other stream's behalfs
+  def handle_call({:connect, host, port, receiver}, _from, state) do
+    stream_id = gen_stream_id(state[:streams])
 
-    hop = List.last(state[:hops])
-    kfs = Enum.map(state[:hops], fn x -> x.kf end)
-    {os, df} = TorCell.RelayCell.encrypt(cell, kfs, hop.df)
+    {:ok, stream} = TorProto.Stream.Initiator.start_link(stream_id, self(), host, port, receiver)
+    streams = Map.put(state[:streams], stream_id, stream)
+
+    state = Map.replace!(state, :streams, streams)
+    {:reply, {:ok, stream}, state}
+  end
+
+  @impl true
+  def handle_call({:extend, router}, _from, state) do
+    hops = ntor(state[:circ_id], state[:connection], state[:hops], router)
+
+    nicks = Enum.map(hops, fn hop -> hop.router.nickname end)
+    Logger.info("Successfully extended circuit to #{router.nickname} => #{inspect(nicks)}")
+
+    state = Map.replace!(state, :hops, hops)
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_cast({:disconnect, stream_id, pid}, state) do
+    # If pid does not match the PID in streams, then something fishy is going on
+    true = Map.get(state[:streams], stream_id) == pid
+
+    streams = Map.delete(state[:streams], stream_id)
+    fifos = TorProto.PidFifos.kill(state[:fifos], pid)
+
+    state = Map.replace!(state, :streams, streams)
+    state = Map.replace!(state, :fifos, fifos)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:poll, pid}, state) do
+    # Only the connection may poll
+    ^pid = state[:connection]
+
+    case TorProto.Connection.Initiator.dequeue(state[:connection]) do
+      {:error, :empty} ->
+        {:noreply, state}
+
+      {:ok, cell} ->
+        circ_id = state[:circ_id]
+        %TorCell{circ_id: ^circ_id, cmd: :relay, payload: %TorCell.Relay{onion_skin: os}} = cell
+        {cell, hops} = decrypt_relay_cell(os, state[:hops])
+        state = Map.replace!(state, :hops, hops)
+
+        if cell.stream_id == 0 do
+          raise "TODO"
+        else
+          # Determine the stream to redirect the cell to
+          stream = Map.get(state[:streams], cell.stream_id)
+          # If there is no PID with that stream ID, something is fishy
+          true = stream != nil
+
+          fifos = TorProto.PidFifos.enqueue(state[:fifos], stream, cell)
+          TorProto.Stream.Initiator.poll(stream)
+
+          state = Map.replace!(state, :fifos, fifos)
+          {:noreply, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_cast({:send_cell, cell, pid}, state) do
+    # If pid does not match the PID in streams, then something fishy is going on
+    true = Map.get(state[:streams], cell.stream_id) == pid
+
+    {os, hops} = encrypt_relay_cell(cell, state[:hops])
 
     cell = %TorCell{
       circ_id: state[:circ_id],
@@ -335,10 +345,94 @@ defmodule TorProto.Circuit.Initiator do
       payload: %TorCell.Relay{onion_skin: os}
     }
 
-    send_cell(state[:connection], cell)
+    sendcell(state[:connection], cell)
 
-    hop = Map.replace!(hop, :df, df)
-    state = Map.replace!(state, :hops, List.replace_at(state[:hops], -1, hop))
+    state = Map.replace!(state, :hops, hops)
     {:noreply, state}
+  end
+
+  ## Client API
+
+  @doc """
+  Starts a circuit on an existing connection.
+
+  This function should only be called from the accompanying connection process.
+  """
+  @spec start_link(TorCell.circ_id(), TorProto.Connection.Initiator.t(), TorProto.Router.t()) ::
+          {:ok, t()}
+  def start_link(circ_id, connection, router) do
+    {:ok, circuit} =
+      GenServer.start_link(__MODULE__, %{circ_id: circ_id, connection: connection, router: router})
+
+    {:ok, circuit}
+  end
+
+  @doc """
+  Terminates a circuit, including all its associated streams.
+  """
+  @spec stop(t()) :: :ok
+  def stop(server) do
+    GenServer.stop(server, :normal)
+  end
+
+  @doc """
+  Dequeues a cell from the FIFO.
+
+  This function can only be called from stream processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec dequeue(t()) :: {:ok, TorCell.RelayCell.t()} | {:error, :empty}
+  def dequeue(server) do
+    GenServer.call(server, :dequeue)
+  end
+
+  @doc """
+  Creates a new stream on the circuit with a random circuit ID.
+  """
+  @spec connect(t(), :inet.hostname(), :inet.port_number(), TorProto.Stream.Initiator.receiver()) ::
+          {:ok, TorProto.Stream.Initiator.t()}
+  def connect(server, host, port, receiver) do
+    GenServer.call(server, {:connect, host, port, receiver})
+  end
+
+  @doc """
+  Destroys a stream on the circuit.
+
+  This function can only be called from stream processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec disconnect(t(), TorCell.RelayCell.stream_id()) :: :ok
+  def disconnect(server, stream_id) do
+    GenServer.cast(server, {:disconnect, stream_id, self()})
+  end
+
+  @doc """
+  Extends a circuit by another hop.
+  """
+  @spec extend(t(), TorProto.Router.t()) :: :ok
+  def extend(server, router) do
+    GenServer.call(server, {:extend, router})
+  end
+
+  @doc """
+  Tells the GenServer that a new cell is available from its connection.
+
+  This function can only be called by the connection process.
+  A violation against this will result in a termination of the process.
+  """
+  @spec poll(t()) :: :ok
+  def poll(server) do
+    GenServer.cast(server, {:poll, self()})
+  end
+
+  @doc """
+  Sends a cell out of the circuit.
+
+  This function can only be called from stream processes.
+  A violation against this will result in a termination of the process.
+  """
+  @spec send_cell(t(), TorCell.RelayCell.t()) :: :ok
+  def send_cell(server, cell) do
+    GenServer.cast(server, {:send_cell, cell, self()})
   end
 end

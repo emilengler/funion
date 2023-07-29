@@ -1,19 +1,17 @@
 # SPDX-License-Identifier: ISC
 
-defmodule TorProto.TlsSocket.Client do
+defmodule TorProto.Connection.Initiator.Satellite do
   @moduledoc """
-  Implements a TLS client using GenServer.
-
-  The reason why this is done outside of the connection process,
-  which may seem unlogical at first, is because the connection
-  process has to receive data while currently receiving other
-  data, that is, during the connection handshake.
-
-  The `TorProto.TlsSocket.Client` process lives as a child of an
-  accompanying `TorProto.Connection.Initiator` process.
+  Implements the satellite process responsible for handling the TLS traffic
+  of an accompanying connection process.
   """
+
+  @type t :: pid()
+
   require Logger
   use GenServer
+
+  ## Generic Functions
 
   @spec enqueue_cells(TorProto.PidFifos.t(), pid(), list(TorCell.t())) :: TorProto.PidFifos.t()
   defp enqueue_cells(fifos, pid, cells) when length(cells) > 0 do
@@ -53,13 +51,25 @@ defmodule TorProto.TlsSocket.Client do
     end
   end
 
+  @spec poll_connection(TorProto.Connection.t(), integer()) :: :ok
+  defp poll_connection(connection, len) when len > 0 do
+    TorProto.Connection.Initiator.poll(connection)
+    poll_connection(connection, len - 1)
+  end
+
+  defp poll_connection(_, 0) do
+    :ok
+  end
+
+  ## GenServer Callbacks
+
   @impl true
   def init(init_arg) do
     # OR's hostname
     host = init_arg[:host]
     # OR's port
     port = init_arg[:port]
-    # The PID of the TorProto.Connection.Initiator process
+    # The PID of the connection
     connection = init_arg[:connection]
 
     {:ok, socket} = :ssl.connect(host, port, [{:active, true}, {:verify, :verify_none}])
@@ -68,7 +78,7 @@ defmodule TorProto.TlsSocket.Client do
     state = %{
       # The buffer of remaining data that cannot be parsed yet
       buf: <<>>,
-      # The Pid Fifos (although only one PID)
+      # The FIFO for the cells of the connection process
       fifos: TorProto.PidFifos.init(),
       # The PID of the parent process
       connection: connection,
@@ -84,20 +94,28 @@ defmodule TorProto.TlsSocket.Client do
   @impl true
   def terminate(:normal, state) do
     :ok = :ssl.close(state[:socket])
-    Logger.debug("Successfully destroyed TLS connection")
+    Logger.debug("Successfully closed the TLS connection")
     :normal
   end
 
   @impl true
-  def handle_call(:dequeue, _from, state) do
-    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], state[:connection])
+  def handle_call(:dequeue, from, state) do
+    {pid, _} = from
+    ^pid = state[:connection]
+
+    {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
 
     state = Map.replace!(state, :fifos, fifos)
-    {:reply, {:ok, cell}, state}
+
+    case cell do
+      nil -> {:reply, {:error, :empty}, state}
+      _ -> {:reply, {:ok, cell}, state}
+    end
   end
 
   @impl true
-  def handle_cast({:send, cell}, state) do
+  def handle_cast({:send_cell, cell, pid}, state) do
+    ^pid = state[:connection]
     :ok = :ssl.send(state[:socket], TorCell.encode(cell, get_circ_id_len(state[:virginity])))
     {:noreply, state}
   end
@@ -109,15 +127,63 @@ defmodule TorProto.TlsSocket.Client do
 
     buf = state[:buf] <> :binary.list_to_bin(data)
     {cells, buf, virginity} = fetch_cells(buf, state[:virginity])
-    cells = Enum.filter(cells, fn cell -> cell.cmd not in [:padding, :vpadding] end)
 
     fifos = enqueue_cells(state[:fifos], state[:connection], cells)
-    Enum.map(cells, fn _ -> GenServer.cast(state[:connection], :poll) end)
+    poll_connection(state[:connection], length(cells))
 
     state = Map.replace!(state, :buf, buf)
     state = Map.replace!(state, :fifos, fifos)
     state = Map.replace!(state, :virginity, virginity)
-
     {:noreply, state}
+  end
+
+  ## Client API
+
+  @doc """
+  Starts the satellite process of a connection initiator.
+
+  It's initialization arguments are as follows:
+
+  * host: The hostname of the OR
+  * port: The port of the OR
+  * connection: The PID of the connection initiator process.
+  """
+  @spec start_link(:ssl.host(), :inet.port_number(), pid()) :: {:ok, t()}
+  def start_link(host, port, connection) do
+    {:ok, server} =
+      GenServer.start_link(__MODULE__, %{host: host, port: port, connection: connection})
+
+    {:ok, server}
+  end
+
+  @doc """
+  Terminates the satellite process of a connection initiator,
+  by closing the TLS connection.
+  """
+  @spec stop(t()) :: :ok
+  def stop(server) do
+    GenServer.stop(server)
+  end
+
+  @doc """
+  Dequeues a cell from the FIFO.
+
+  This function is reserved for the connection process.
+  A violation will result in an immediate shutdown.
+  """
+  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, :empty}
+  def dequeue(server) do
+    GenServer.call(server, :dequeue)
+  end
+
+  @doc """
+  Sends a cell out of the connection.
+
+  This function is reserved for the connection process.
+  A violation will result in an immediate shutdown.
+  """
+  @spec send_cell(t(), TorCell.t()) :: :ok
+  def send_cell(server, cell) do
+    GenServer.cast(server, {:send_cell, cell, self()})
   end
 end

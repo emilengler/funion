@@ -2,10 +2,17 @@
 
 defmodule TorProto.Stream.Initiator do
   @moduledoc """
-  Implements a Tor stream using GenServer.
+  Implements a stream of the Tor protocol.
   """
+
+  @type t :: pid()
+
+  @type receiver :: (binary() -> :ok)
+
   require Logger
   use GenServer
+
+  ## Generic Functions
 
   @spec chunkify(binary(), integer(), list(binary())) :: list(binary())
   defp chunkify(data, n, chunks \\ []) do
@@ -17,49 +24,89 @@ defmodule TorProto.Stream.Initiator do
     end
   end
 
-  @spec recv_cell(pid()) :: TorCell.RelayCell.t()
-  defp recv_cell(circuit) do
-    # TODO: Let :dequeue not return :ok if nil
-    {:ok, cell} = GenServer.call(circuit, :dequeue)
-
-    if cell == nil do
-      recv_cell(circuit)
-    else
-      cell
+  @spec recvcell(TorProto.Circuit.Initiator.t()) :: TorCell.RelayCell.t()
+  defp recvcell(circuit) do
+    case TorProto.Circuit.Initiator.dequeue(circuit) do
+      {:ok, cell} -> cell
+      {:error, :empty} -> recvcell(circuit)
     end
   end
 
-  @spec send_cell(pid(), TorCell.RelayCell.t()) :: :ok
-  defp send_cell(circuit, cell) do
-    GenServer.cast(circuit, {:send, cell})
+  @spec sendcell(TorProto.Circuit.Initiator.t(), TorCell.RelayCell.t()) :: :ok
+  defp sendcell(circuit, cell) do
+    TorProto.Circuit.Initiator.send_cell(circuit, cell)
   end
+
+  @spec sendcells(TorProto.Circuit.Initiator.t(), list(TorCell.RelayCell.t())) :: :ok
+  defp sendcells(circuit, cells) when length(cells) > 0 do
+    sendcell(circuit, hd(cells))
+    sendcells(circuit, tl(cells))
+  end
+
+  defp sendcells(_, _) do
+    :ok
+  end
+
+  ## GenServer Callbacks
 
   @impl true
   def init(init_arg) do
-    circuit = init_arg[:circuit]
-    host = init_arg[:host]
-    port = init_arg[:port]
-    receiver = init_arg[:receiver]
-    stream_id = init_arg[:stream_id]
+    {:ok, init_arg, {:continue, :connect}}
+  end
 
-    # The initialization has to take place in an asynchronous fashion,
-    # because we need to interact with the circuit process during
-    # our own initialization.
-    GenServer.cast(self(), {:init, circuit, host, port, receiver, stream_id})
+  @impl true
+  def handle_continue(:connect, state) do
+    host = state[:host]
+    port = state[:port]
 
-    {:ok, nil}
+    sendcell(state[:circuit], %TorCell.RelayCell{
+      cmd: :begin,
+      stream_id: state[:stream_id],
+      data: %TorCell.RelayCell.Begin{host: host, port: port}
+    })
+
+    Logger.debug("Sent RELAY_BEGIN cell")
+
+    cell = recvcell(state[:circuit])
+
+    state = %{
+      # The PID of the circuit we are associated to
+      circuit: state[:circuit],
+      # The hostname of the stream
+      host: host,
+      # The port of the stream
+      port: port,
+      # The closure that receives all incoming data from the stream
+      receiver: state[:receiver],
+      # The stream ID that was assigned to us by our circuit
+      stream_id: state[:stream_id]
+    }
+
+    case cell.cmd do
+      :connected ->
+        Logger.debug("Received RELAY_CONNECTED cell")
+
+        %TorCell.RelayCell.Connected{ip: ip, ttl: _} = cell.data
+        Logger.info("Successfully connected to #{inspect(host)}:#{port} (#{inspect(ip)})")
+
+        {:noreply, state}
+
+      :end ->
+        Logger.debug("Received RELAY_END cell: #{inspect(cell.data)}")
+        Logger.error("Could not create stream to #{inspect(host)}:#{port}")
+        {:stop, :normal, state}
+    end
   end
 
   @impl true
   def terminate(:normal, state) do
-    end_cell = %TorCell.RelayCell{
+    sendcell(state[:circuit], %TorCell.RelayCell{
       cmd: :end,
       stream_id: state[:stream_id],
       data: %TorCell.RelayCell.End{reason: :done}
-    }
+    })
 
-    send_cell(state[:circuit], end_cell)
-    GenServer.cast(state[:circuit], {:end, state[:stream_id]})
+    TorProto.Circuit.Initiator.disconnect(state[:circuit], state[:stream_id])
 
     host = state[:host]
     port = state[:port]
@@ -68,7 +115,31 @@ defmodule TorProto.Stream.Initiator do
   end
 
   @impl true
-  def handle_cast({:send, data}, state) do
+  def handle_cast({:poll, pid}, state) do
+    # Only the circuit may poll
+    ^pid = state[:circuit]
+
+    case TorProto.Circuit.Initiator.dequeue(state[:circuit]) do
+      {:error, :empty} ->
+        {:noreply, state}
+
+      {:ok, cell} ->
+        stream_id = state[:stream_id]
+        %TorCell.RelayCell{cmd: cmd, stream_id: ^stream_id, data: data} = cell
+
+        case cmd do
+          :data ->
+            state[:receiver].(data.data)
+            {:noreply, state}
+
+          :end ->
+            {:stop, :normal, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_cast({:send_data, data}, state) do
     cells =
       Enum.map(chunkify(data, 509), fn chunk ->
         %TorCell.RelayCell{
@@ -78,72 +149,63 @@ defmodule TorProto.Stream.Initiator do
         }
       end)
 
-    Enum.map(cells, fn cell -> send_cell(state[:circuit], cell) end)
+    sendcells(state[:circuit], cells)
 
     {:noreply, state}
   end
 
-  @impl true
-  def handle_cast({:init, circuit, host, port, receiver, stream_id}, state) do
-    nil = state
+  ## Client API
 
-    begin = %TorCell.RelayCell{
-      cmd: :begin,
-      stream_id: stream_id,
-      data: %TorCell.RelayCell.Begin{
+  @doc """
+  Starts a stream on an existing connection.
+
+  This function should only be called from the accompanying circuit process.
+  """
+  @spec start_link(
+          TorCell.RelayCell.stream_id(),
+          TorProto.Circuit.Initiator.t(),
+          :inet.hostname(),
+          :inet.port_number(),
+          receiver()
+        ) ::
+          {:ok, t()}
+  def start_link(stream_id, circuit, host, port, receiver) do
+    {:ok, stream} =
+      GenServer.start_link(__MODULE__, %{
+        circuit: circuit,
         host: host,
-        port: port
-      }
-    }
+        port: port,
+        receiver: receiver,
+        stream_id: stream_id
+      })
 
-    send_cell(circuit, begin)
-    Logger.debug("Sent RELAY_BEGIN cell")
-
-    cell = recv_cell(circuit)
-
-    # TODO: Implement support for RELAY_END at this stage
-    %TorCell.RelayCell{
-      cmd: :connected,
-      stream_id: ^stream_id,
-      data: %TorCell.RelayCell.Connected{ip: ip, ttl: _}
-    } = cell
-
-    Logger.debug("Received RELAY_CONNECTED cell")
-
-    Logger.info("Successfully created stream to #{inspect(host)}:#{port} (#{inspect(ip)})")
-
-    state = %{
-      circuit: circuit,
-      host: host,
-      port: port,
-      stream_id: stream_id,
-      receiver: receiver
-    }
-
-    {:noreply, state}
+    {:ok, stream}
   end
 
-  @impl true
-  def handle_cast(:poll, state) do
-    {:ok, cell} = GenServer.call(state[:circuit], :dequeue)
+  @doc """
+  Terminates a stream.
+  """
+  @spec stop(t()) :: :ok
+  def stop(server) do
+    GenServer.stop(server, :normal)
+  end
 
-    if cell == nil do
-      {:noreply, state}
-    else
-      stream_id = state[:stream_id]
-      ^stream_id = cell.stream_id
+  @doc """
+  Tells the GenServer that a new cell is available from its circuit.
 
-      # The end has to be treated specially
-      case cell.cmd do
-        :data -> state[:receiver].(cell.data.data)
-        :end -> nil
-      end
+  This function can only be called by the circuit process.
+  A violation against this will result in a termination of the process.
+  """
+  @spec poll(t()) :: :ok
+  def poll(server) do
+    GenServer.cast(server, {:poll, self()})
+  end
 
-      if cell.cmd == :end do
-        {:stop, :normal, state}
-      else
-        {:noreply, state}
-      end
-    end
+  @doc """
+  Sends data out of the stream.
+  """
+  @spec send_data(t(), binary()) :: :ok
+  def send_data(server, data) do
+    GenServer.cast(server, {:send_data, data})
   end
 end
