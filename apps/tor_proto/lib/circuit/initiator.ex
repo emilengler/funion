@@ -266,10 +266,10 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
-  def handle_call({:connect, host, port}, _from, state) do
+  def handle_call({:connect, host, port, receiver}, _from, state) do
     stream_id = gen_stream_id(state[:streams])
 
-    {:ok, stream} = TorProto.Stream.Initiator.start_link(stream_id, self(), host, port)
+    {:ok, stream} = TorProto.Stream.Initiator.start_link(stream_id, self(), host, port, receiver)
     streams = Map.put(state[:streams], stream_id, stream)
 
     state = Map.replace!(state, :streams, streams)
@@ -381,7 +381,7 @@ defmodule TorProto.Circuit.Initiator do
   This function can only be called from stream processes.
   A violation against this will result in a termination of the process.
   """
-  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, term()}
+  @spec dequeue(t()) :: {:ok, TorCell.RelayCell.t()} | {:error, term()}
   def dequeue(server) do
     GenServer.call(server, :dequeue)
   end
@@ -389,9 +389,10 @@ defmodule TorProto.Circuit.Initiator do
   @doc """
   Creates a new stream on the circuit with a random circuit ID.
   """
-  @spec connect(t(), :inet.hostname(), :inet.port_number()) :: :ok | {:error, term()}
-  def connect(server, host, port) do
-    GenServer.call(server, {:connect, host, port})
+  @spec connect(t(), :inet.hostname(), :inet.port_number(), TorProto.Stream.Initiator.receiver()) ::
+          :ok | {:error, term()}
+  def connect(server, host, port, receiver) do
+    GenServer.call(server, {:connect, host, port, receiver})
   end
 
   @doc """
