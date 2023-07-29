@@ -194,9 +194,7 @@ defmodule TorProto.Connection.Initiator do
   end
 
   @impl true
-  def handle_call({:destroy, circ_id}, from, state) do
-    {pid, _} = from
-
+  def handle_cast({:destroy, circ_id, pid}, state) do
     # If pid does not match the PID in circuits, then something fishy is going on
     true = Map.get(state[:circuits], circ_id) == pid
 
@@ -205,7 +203,7 @@ defmodule TorProto.Connection.Initiator do
 
     state = Map.replace!(state, :circuits, circuits)
     state = Map.replace!(state, :fifos, fifos)
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
   @impl true
@@ -294,7 +292,7 @@ defmodule TorProto.Connection.Initiator do
   """
   @spec destroy(t(), TorCell.circ_id()) :: :ok | {:error, term()}
   def destroy(server, circ_id) do
-    GenServer.call(server, {:destroy, circ_id})
+    GenServer.cast(server, {:destroy, circ_id, self()})
   end
 
   @doc """
