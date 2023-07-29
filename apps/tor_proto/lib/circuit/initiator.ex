@@ -374,7 +374,7 @@ defmodule TorProto.Circuit.Initiator do
   """
   @spec stop(t()) :: :ok | {:error, term()}
   def stop(server) do
-    :ok = GenServer.stop(server, :normal)
+    GenServer.stop(server, :normal)
   end
 
   @doc """

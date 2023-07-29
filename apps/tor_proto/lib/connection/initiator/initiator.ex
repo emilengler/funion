@@ -26,7 +26,7 @@ defmodule TorProto.Connection.Initiator do
 
   @spec terminate_circuits(list(TorProto.Circuit.Initiator.t())) :: :ok
   defp terminate_circuits(circuits) when length(circuits) > 0 do
-    :ok = TorProto.Circuit.Initiator.stop(hd(circuits))
+    TorProto.Circuit.Initiator.stop(hd(circuits))
     terminate_circuits(tl(circuits))
   end
 
@@ -44,7 +44,7 @@ defmodule TorProto.Connection.Initiator do
 
   @spec sendcell(TorProto.Connection.Initiator.Satellite.t(), TorCell.t()) :: :ok
   defp sendcell(satellite, cell) do
-    :ok = TorProto.Connection.Initiator.Satellite.send_cell(satellite, cell)
+    TorProto.Connection.Initiator.Satellite.send_cell(satellite, cell)
   end
 
   @spec valid_cert?(TorCell.Certs.Cert.t(), TorProto.Router.Keys.t()) :: boolean()
@@ -92,12 +92,11 @@ defmodule TorProto.Connection.Initiator do
 
     Logger.debug("Created connection satellite process #{inspect(satellite)}")
 
-    :ok =
-      sendcell(satellite, %TorCell{
-        circ_id: 0,
-        cmd: :versions,
-        payload: %TorCell.Versions{versions: [4]}
-      })
+    sendcell(satellite, %TorCell{
+      circ_id: 0,
+      cmd: :versions,
+      payload: %TorCell.Versions{versions: [4]}
+    })
 
     Logger.debug("Sent VERSIONS cell")
     versions = recv_cell(satellite)
@@ -155,7 +154,7 @@ defmodule TorProto.Connection.Initiator do
 
   @impl true
   def terminate(:normal, state) do
-    :ok = terminate_circuits(Map.values(state[:circuits]))
+    terminate_circuits(Map.values(state[:circuits]))
     Logger.debug("Successfully terminated all circuits")
 
     TorProto.Connection.Initiator.Satellite.stop(state[:satellite])
@@ -228,7 +227,7 @@ defmodule TorProto.Connection.Initiator do
           true = circuit != nil
 
           fifos = TorProto.PidFifos.enqueue(state[:fifos], circuit, cell)
-          :ok = TorProto.Circuit.Initiator.poll(circuit)
+          TorProto.Circuit.Initiator.poll(circuit)
 
           state = Map.replace!(state, :fifos, fifos)
           {:noreply, state}
@@ -241,7 +240,7 @@ defmodule TorProto.Connection.Initiator do
     # If pid does not match the PID in circuits, then something fishy is going on
     true = Map.get(state[:circuits], cell.circ_id) == pid
 
-    :ok = sendcell(state[:satellite], cell)
+    sendcell(state[:satellite], cell)
 
     {:noreply, state}
   end

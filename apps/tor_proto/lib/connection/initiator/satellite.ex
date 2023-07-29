@@ -53,7 +53,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
 
   @spec poll_connection(TorProto.Connection.t(), integer()) :: :ok
   defp poll_connection(connection, len) when len > 0 do
-    :ok = TorProto.Connection.Initiator.poll(connection)
+    TorProto.Connection.Initiator.poll(connection)
   end
 
   defp poll_connection(_, 0) do
@@ -128,7 +128,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
     {cells, buf, virginity} = fetch_cells(buf, state[:virginity])
 
     fifos = enqueue_cells(state[:fifos], state[:connection], cells)
-    :ok = poll_connection(state[:connection], length(cells))
+    poll_connection(state[:connection], length(cells))
 
     state = Map.replace!(state, :buf, buf)
     state = Map.replace!(state, :fifos, fifos)
