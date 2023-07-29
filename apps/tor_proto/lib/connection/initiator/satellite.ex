@@ -107,7 +107,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
     state = Map.replace!(state, :fifos, fifos)
 
     case cell do
-      nil -> {:reply, {:error, :emtpy}, state}
+      nil -> {:reply, {:error, :empty}, state}
       _ -> {:reply, {:ok, cell}, state}
     end
   end
