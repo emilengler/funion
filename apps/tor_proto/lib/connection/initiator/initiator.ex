@@ -171,7 +171,7 @@ defmodule TorProto.Connection.Initiator do
     {pid, _} = from
 
     # If pid does not match the PID in circuits, then something fishy is going on
-    true = Map.get(state[:circuits], state[:circ_id]) == pid
+    true = Enum.member?(Map.values(state[:circuits]), pid)
 
     {fifos, cell} = TorProto.PidFifos.dequeue(state[:fifos], pid)
 
@@ -233,8 +233,6 @@ defmodule TorProto.Connection.Initiator do
           state = Map.replace!(state, :fifos, fifos)
           {:noreply, state}
         end
-
-        {:noreply, state}
     end
   end
 
