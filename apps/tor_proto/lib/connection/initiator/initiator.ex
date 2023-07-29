@@ -251,7 +251,7 @@ defmodule TorProto.Connection.Initiator do
   This function will spawn a new process and will return, once that process
   has created the TLS connection and performed the in-protocol handshake.
   """
-  @spec start_link(TorProto.Router.t()) :: :ok | {:error, term()}
+  @spec start_link(TorProto.Router.t()) :: {:ok, t()} | {:error, term()}
   def start_link(router) do
     {:ok, server} = GenServer.start_link(__MODULE__, %{router: router})
     {:ok, server}
