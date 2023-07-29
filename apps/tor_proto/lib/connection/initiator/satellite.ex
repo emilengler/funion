@@ -148,7 +148,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
   * port: The port of the OR
   * connection: The PID of the connection initiator process.
   """
-  @spec start_link(:ssl.host(), :inet.port_number(), pid()) :: {:ok, t()} | {:error, term()}
+  @spec start_link(:ssl.host(), :inet.port_number(), pid()) :: {:ok, t()}
   def start_link(host, port, connection) do
     {:ok, server} =
       GenServer.start_link(__MODULE__, %{host: host, port: port, connection: connection})
@@ -160,7 +160,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
   Terminates the satellite process of a connection initiator,
   by closing the TLS connection.
   """
-  @spec stop(t()) :: :ok | {:error, term()}
+  @spec stop(t()) :: :ok
   def stop(server) do
     GenServer.stop(server)
   end
@@ -171,7 +171,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
   This function is reserved for the connection process.
   A violation will result in an immediate shutdown.
   """
-  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, term()}
+  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, :empty}
   def dequeue(server) do
     GenServer.call(server, :dequeue)
   end
@@ -182,7 +182,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
   This function is reserved for the connection process.
   A violation will result in an immediate shutdown.
   """
-  @spec send_cell(t(), TorCell.t()) :: :ok | {:error, term()}
+  @spec send_cell(t(), TorCell.t()) :: :ok
   def send_cell(server, cell) do
     GenServer.cast(server, {:send_cell, cell, self()})
   end

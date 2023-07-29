@@ -79,7 +79,7 @@ defmodule TorProto.Circuit.Initiator do
     end
   end
 
-  @spec gen_stream_id(map()) :: integer()
+  @spec gen_stream_id(map()) :: TorCell.RelayCell.stream_id()
   defp gen_stream_id(streams) do
     stream_id = Enum.random(1..(2 ** 16 - 1))
 
@@ -359,7 +359,7 @@ defmodule TorProto.Circuit.Initiator do
   This function should only be called from the accompanying connection process.
   """
   @spec start_link(TorCell.circ_id(), TorProto.Connection.Initiator.t(), TorProto.Router.t()) ::
-          {:ok, t()} | {:error, term()}
+          {:ok, t()}
   def start_link(circ_id, connection, router) do
     {:ok, circuit} =
       GenServer.start_link(__MODULE__, %{circ_id: circ_id, connection: connection, router: router})
@@ -370,7 +370,7 @@ defmodule TorProto.Circuit.Initiator do
   @doc """
   Terminates a circuit, including all its associated streams.
   """
-  @spec stop(t()) :: :ok | {:error, term()}
+  @spec stop(t()) :: :ok
   def stop(server) do
     GenServer.stop(server, :normal)
   end
@@ -381,7 +381,7 @@ defmodule TorProto.Circuit.Initiator do
   This function can only be called from stream processes.
   A violation against this will result in a termination of the process.
   """
-  @spec dequeue(t()) :: {:ok, TorCell.RelayCell.t()} | {:error, term()}
+  @spec dequeue(t()) :: {:ok, TorCell.RelayCell.t()} | {:error, :empty}
   def dequeue(server) do
     GenServer.call(server, :dequeue)
   end
@@ -390,7 +390,7 @@ defmodule TorProto.Circuit.Initiator do
   Creates a new stream on the circuit with a random circuit ID.
   """
   @spec connect(t(), :inet.hostname(), :inet.port_number(), TorProto.Stream.Initiator.receiver()) ::
-          :ok | {:error, term()}
+          {:ok, TorProto.Stream.Initiator.t()}
   def connect(server, host, port, receiver) do
     GenServer.call(server, {:connect, host, port, receiver})
   end
@@ -401,7 +401,7 @@ defmodule TorProto.Circuit.Initiator do
   This function can only be called from stream processes.
   A violation against this will result in a termination of the process.
   """
-  @spec disconnect(t(), TorCell.RelayCell.stream_id()) :: :ok | {:error, term()}
+  @spec disconnect(t(), TorCell.RelayCell.stream_id()) :: :ok
   def disconnect(server, stream_id) do
     GenServer.cast(server, {:disconnect, stream_id, self()})
   end
@@ -409,7 +409,7 @@ defmodule TorProto.Circuit.Initiator do
   @doc """
   Extends a circuit by another hop.
   """
-  @spec extend(t(), TorProto.Router.t()) :: :ok | {:error, term()}
+  @spec extend(t(), TorProto.Router.t()) :: :ok
   def extend(server, router) do
     GenServer.call(server, {:extend, router})
   end
@@ -420,7 +420,7 @@ defmodule TorProto.Circuit.Initiator do
   This function can only be called by the connection process.
   A violation against this will result in a termination of the process.
   """
-  @spec poll(t()) :: :ok | {:error, term()}
+  @spec poll(t()) :: :ok
   def poll(server) do
     GenServer.cast(server, {:poll, self()})
   end
@@ -431,7 +431,7 @@ defmodule TorProto.Circuit.Initiator do
   This function can only be called from stream processes.
   A violation against this will result in a termination of the process.
   """
-  @spec send_cell(t(), TorCell.RelayCell.t()) :: :ok | {:error, term()}
+  @spec send_cell(t(), TorCell.RelayCell.t()) :: :ok
   def send_cell(server, cell) do
     GenServer.cast(server, {:send_cell, cell, self()})
   end

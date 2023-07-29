@@ -168,7 +168,7 @@ defmodule TorProto.Stream.Initiator do
           :inet.port_number(),
           receiver()
         ) ::
-          {:ok, t()} | {:error, term()}
+          {:ok, t()}
   def start_link(stream_id, circuit, host, port, receiver) do
     {:ok, stream} =
       GenServer.start_link(__MODULE__, %{
@@ -185,9 +185,9 @@ defmodule TorProto.Stream.Initiator do
   @doc """
   Terminates a stream.
   """
-  @spec stop(t()) :: :ok | {:error, term()}
+  @spec stop(t()) :: :ok
   def stop(server) do
-    :ok = GenServer.stop(server, :normal)
+    GenServer.stop(server, :normal)
   end
 
   @doc """
@@ -196,7 +196,7 @@ defmodule TorProto.Stream.Initiator do
   This function can only be called by the circuit process.
   A violation against this will result in a termination of the process.
   """
-  @spec poll(t()) :: :ok | {:error, term()}
+  @spec poll(t()) :: :ok
   def poll(server) do
     GenServer.cast(server, {:poll, self()})
   end
@@ -204,7 +204,7 @@ defmodule TorProto.Stream.Initiator do
   @doc """
   Sends data out of the stream.
   """
-  @spec send_data(t(), binary()) :: :ok | {:error, term()}
+  @spec send_data(t(), binary()) :: :ok
   def send_data(server, data) do
     GenServer.cast(server, {:send_data, data})
   end

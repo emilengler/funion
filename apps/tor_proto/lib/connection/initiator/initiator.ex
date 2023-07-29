@@ -12,7 +12,7 @@ defmodule TorProto.Connection.Initiator do
 
   ## Generic Functions
 
-  @spec gen_circ_id(map()) :: integer()
+  @spec gen_circ_id(map()) :: TorCell.circ_id()
   defp gen_circ_id(circuits) do
     # Set the MSB to 1
     circ_id = Bitwise.bor(2 ** 31, Enum.random(1..(2 ** 32 - 1)))
@@ -251,7 +251,7 @@ defmodule TorProto.Connection.Initiator do
   This function will spawn a new process and will return, once that process
   has created the TLS connection and performed the in-protocol handshake.
   """
-  @spec start_link(TorProto.Router.t()) :: {:ok, t()} | {:error, term()}
+  @spec start_link(TorProto.Router.t()) :: {:ok, t()}
   def start_link(router) do
     {:ok, server} = GenServer.start_link(__MODULE__, %{router: router})
     {:ok, server}
@@ -260,7 +260,7 @@ defmodule TorProto.Connection.Initiator do
   @doc """
   Terminates a connection, including all its associated circuits and streams.
   """
-  @spec stop(t()) :: :ok | {:error, term()}
+  @spec stop(t()) :: :ok
   def stop(server) do
     GenServer.stop(server)
   end
@@ -271,7 +271,7 @@ defmodule TorProto.Connection.Initiator do
   This function can only be called from circuit processes.
   A violation against this will result in a termination of the process.
   """
-  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, term()}
+  @spec dequeue(t()) :: {:ok, TorCell.t()} | {:error, :empty}
   def dequeue(server) do
     GenServer.call(server, :dequeue)
   end
@@ -279,7 +279,7 @@ defmodule TorProto.Connection.Initiator do
   @doc """
   Creates a new circuit on the connection with a random circuit ID.
   """
-  @spec create(t()) :: :ok | {:error, term()}
+  @spec create(t()) :: {:ok, TorProto.Circuit.Initiator.t()}
   def create(server) do
     GenServer.call(server, :create)
   end
@@ -290,7 +290,7 @@ defmodule TorProto.Connection.Initiator do
   This function can only be called from circuit processes.
   A violation against this will result in a termination of the process.
   """
-  @spec destroy(t(), TorCell.circ_id()) :: :ok | {:error, term()}
+  @spec destroy(t(), TorCell.circ_id()) :: :ok
   def destroy(server, circ_id) do
     GenServer.cast(server, {:destroy, circ_id, self()})
   end
@@ -301,7 +301,7 @@ defmodule TorProto.Connection.Initiator do
   This function can only be called by the satellite process.
   A violation against this will result in a termination of the process.
   """
-  @spec poll(t()) :: :ok | {:error, term()}
+  @spec poll(t()) :: :ok
   def poll(server) do
     GenServer.cast(server, {:poll, self()})
   end
@@ -312,7 +312,7 @@ defmodule TorProto.Connection.Initiator do
   This function can only be called from circuit processes.
   A violation against this will result in a termination of the process.
   """
-  @spec send_cell(t(), TorCell.t()) :: :ok | {:error, term()}
+  @spec send_cell(t(), TorCell.t()) :: :ok
   def send_cell(server, cell) do
     GenServer.cast(server, {:send_cell, cell, self()})
   end
