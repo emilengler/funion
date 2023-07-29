@@ -277,21 +277,6 @@ defmodule TorProto.Circuit.Initiator do
   end
 
   @impl true
-  def handle_call({:disconnect, stream_id}, from, state) do
-    {pid, _} = from
-
-    # If pid does not match the PID in streams, then something fishy is going on
-    true = Map.get(state[:streams], stream_id) == pid
-
-    streams = Map.delete(state[:streams], stream_id)
-    fifos = TorProto.PidFifos.kill(state[:fifos], pid)
-
-    state = Map.replace!(state, :streams, streams)
-    state = Map.replace!(state, :fifos, fifos)
-    {:reply, :ok, state}
-  end
-
-  @impl true
   def handle_call({:extend, router}, _from, state) do
     hops = ntor(state[:circ_id], state[:connection], state[:hops], router)
 
@@ -300,6 +285,19 @@ defmodule TorProto.Circuit.Initiator do
 
     state = Map.replace!(state, :hops, hops)
     {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_cast({:disconnect, stream_id, pid}, state) do
+    # If pid does not match the PID in streams, then something fishy is going on
+    true = Map.get(state[:streams], stream_id) == pid
+
+    streams = Map.delete(state[:streams], stream_id)
+    fifos = TorProto.PidFifos.kill(state[:fifos], pid)
+
+    state = Map.replace!(state, :streams, streams)
+    state = Map.replace!(state, :fifos, fifos)
+    {:noreply, state}
   end
 
   @impl true
@@ -404,7 +402,7 @@ defmodule TorProto.Circuit.Initiator do
   """
   @spec disconnect(t(), TorCell.RelayCell.stream_id()) :: :ok | {:error, term()}
   def disconnect(server, stream_id) do
-    GenServer.call(server, {:disconnect, stream_id})
+    GenServer.cast(server, {:disconnect, stream_id, self()})
   end
 
   @doc """
