@@ -54,6 +54,7 @@ defmodule TorProto.Connection.Initiator.Satellite do
   @spec poll_connection(TorProto.Connection.t(), integer()) :: :ok
   defp poll_connection(connection, len) when len > 0 do
     TorProto.Connection.Initiator.poll(connection)
+    poll_connection(connection, len - 1)
   end
 
   defp poll_connection(_, 0) do
