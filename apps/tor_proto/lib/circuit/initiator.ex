@@ -100,7 +100,7 @@ defmodule TorProto.Circuit.Initiator do
     hdata = TorCrypto.Handshake.Ntor.Client.stage2(b, id, x_pk)
 
     {cell, hops} =
-      if length(hops) == 0 do
+      if Enum.empty?(hops) do
         # Use CREATE2
         {%TorCell{
            circ_id: circ_id,
@@ -130,7 +130,7 @@ defmodule TorProto.Circuit.Initiator do
     cell = recvcell(connection)
 
     {hdata, hops} =
-      if length(hops) == 0 do
+      if Enum.empty?(hops) do
         %TorCell{circ_id: ^circ_id, cmd: :created2, payload: %TorCell.Created2{hdata: hdata}} =
           cell
 
