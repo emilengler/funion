@@ -148,7 +148,7 @@ defmodule TorCell do
     else
       # Fill with padding bytes
       padding = 509 - byte_size(payload)
-      payload <> <<0::padding*8>>
+      payload <> <<0::integer-size(padding)-unit(8)>>
     end
   end
 

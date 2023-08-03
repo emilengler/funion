@@ -22,6 +22,16 @@ defmodule TorCell.RelayCell do
   @type streams :: list(TorCrypto.OnionStream.t())
   @type digest :: TorCrypto.Digest.t()
 
+  @spec gen_padding(integer()) :: binary()
+  defp gen_padding(padding_len) do
+    if padding_len <= 4 do
+      <<0::integer-size(padding_len)-unit(8)>>
+    else
+      padding_len = padding_len - 4
+      <<0::32>> <> :crypto.strong_rand_bytes(padding_len)
+    end
+  end
+
   @spec modify_digest(binary(), binary()) :: binary()
   defp modify_digest(data, digest) do
     <<prefix::binary-size(5), suffix::binary>> = data
@@ -111,12 +121,11 @@ defmodule TorCell.RelayCell do
   defp encode(cell, digest) do
     encoded_data = encode_data(cell.cmd, cell.data)
     padding_len = 509 - 11 - byte_size(encoded_data)
-    true = padding_len >= 0
 
     encoded =
       encode_cmd(cell.cmd) <>
         <<0::16, cell.stream_id::16, 0::32, byte_size(encoded_data)::16>> <>
-        encoded_data <> <<0::integer-size(padding_len)-unit(8)>>
+        encoded_data <> gen_padding(padding_len)
 
     digest = TorCrypto.Digest.update(digest, encoded)
     encoded = modify_digest(encoded, <<TorCrypto.Digest.calculate(digest)::binary-size(4)>>)
