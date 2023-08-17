@@ -10,12 +10,8 @@ An implementation of the Tor protocol in Elixir.
 
 ## Contributing
 
-The repository itself is managed by the [Fossil](https://fossil-scm.org) version control system.
-A [GitHub](https://github.com/emilengler/funion) mirror is available.
-
-Please report [**issues**](https://dev.emux.org/funion/ticket) there.
-
-**Pull Requests** are accepted through [E-Mail](mailto:me@emilengler.com) and [GitHub](https://github.com/emilengler/funion)! 😍
+We have a [GitHub](https://github.com/emilengler/funion) repository.
+Please report issues and pull requests there.
 
 ## Etymology
 
